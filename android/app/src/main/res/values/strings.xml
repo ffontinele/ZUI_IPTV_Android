@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ZUI IPTV</string>
+    <string name="title_activity_main">ZUI IPTV</string>
+    <string name="package_name">com.zui.iptv.android</string>
+    <string name="custom_url_scheme">com.zui.iptv.android</string>
+</resources>
