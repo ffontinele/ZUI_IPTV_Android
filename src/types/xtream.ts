@@ -1,0 +1,143 @@
+export type XtreamCredentials = {
+  host: string;     // Schema dahil: "http://provider.com" veya "https://..."
+  port: number;     // Default 80 (http) veya 443 (https)
+  username: string;
+  password: string;
+};
+
+// API response tipleri (raw)
+export type XtreamUserInfo = {
+  username: string;
+  password: string;
+  message: string;
+  auth: 0 | 1;
+  status: string;           // "Active" vb.
+  exp_date: string;         // Unix timestamp string (veya null/empty)
+  is_trial: string;
+  active_cons: string;
+  created_at: string;
+  max_connections: string;
+  allowed_output_formats: string[];
+  // D-035: bazı provider'lar kullanıcının erişebileceği bouquet ID'lerini döner
+  bouquets?: number[];
+};
+
+export type XtreamServerInfo = {
+  url: string;
+  port: string;
+  https_port: string;
+  server_protocol: 'http' | 'https';
+  rtmp_port: string;
+  timezone: string;
+  timestamp_now: number;
+  time_now: string;
+};
+
+export type XtreamAuthResponse = {
+  user_info: XtreamUserInfo;
+  server_info: XtreamServerInfo;
+};
+
+export type XtreamCategory = {
+  category_id: string;
+  category_name: string;
+  parent_id: number;
+};
+
+export type XtreamStream = {
+  num: number;
+  name: string;
+  stream_type: 'live';
+  stream_id: number;
+  stream_icon: string;
+  epg_channel_id: string | null;
+  added: string;
+  category_id: string;
+  custom_sid: string;
+  tv_archive: 0 | 1;
+  direct_source: string;
+  tv_archive_duration: number | null;
+  // D-035: bazı provider'lar stream'in hangi bouquet'lere ait olduğunu döner
+  bouquet_ids?: number[];
+};
+
+// ─── Series (TV Show) types ─────────────────────────────────────────────────
+
+/** One series entry from the `get_series` list endpoint. */
+export type XtreamSeriesStream = {
+  num?: number;
+  series_id: number;
+  name: string;
+  cover: string;              // poster URL
+  plot?: string;
+  cast?: string;
+  director?: string;
+  genre?: string;
+  releaseDate?: string;       // "YYYY" or "YYYY-MM-DD"
+  last_modified?: string;     // unix timestamp string
+  rating: string;             // "7.5" — needs parseFloat
+  rating_5based?: number;
+  backdrop_path?: string[] | string;
+  youtube_trailer?: string;
+  episode_run_time?: string;  // episode duration in minutes
+  category_id?: string;
+};
+
+/** One episode entry from the `get_series_info` episodes map. */
+export type XtreamSeriesEpisode = {
+  id: string;                 // stream ID used to build playback URL
+  episode_num: number;
+  title: string;
+  container_extension: string;
+  added?: string;
+  info?: {
+    plot?: string;
+    duration_secs?: number;
+    duration?: string;
+    movie_image?: string;
+  };
+};
+
+/** Full response from `get_series_info?series_id=X`. */
+export type XtreamSeriesInfoResponse = {
+  info: XtreamSeriesStream & {
+    category_id?: string;
+    episode_run_time?: string;
+  };
+  seasons: Record<string, {
+    season_number: number;
+    name?: string;
+    cover?: string;
+    episode_count?: number;
+    air_date?: string;
+  }>;
+  episodes: Record<string, XtreamSeriesEpisode[]>;
+};
+
+// ─── VOD (Movie) types ──────────────────────────────────────────────────────
+
+export type XtreamVodStream = {
+  num: number;
+  name: string;
+  stream_type: 'movie';
+  stream_id: number;
+  stream_icon: string;     // poster URL
+  rating: string;          // "7.5" — string, needs parseFloat
+  rating_5based: number;
+  added: string;           // unix timestamp string
+  category_id: string;
+  container_extension: string;  // "mkv" | "mp4" | "avi" …
+  custom_sid?: string;
+  direct_source?: string;
+  // Optional TMDb/provider extras (not all providers expose these)
+  plot?: string;
+  cast?: string;
+  director?: string;
+  genre?: string;
+  release_date?: string;   // "YYYY-MM-DD" or year string
+  youtube_trailer?: string;
+  backdrop_path?: string[] | string;
+  // TMDb-enriched fields (some providers)
+  tmdb_id?: number | string;
+  runtime?: string;         // "120" minutes as string on some providers
+};

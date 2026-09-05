@@ -1,0 +1,162 @@
+// SeriesScreen — root layout for the Series screen.
+// Mirrors MoviesScreen: always renders FocusContext, lazy-loads data on mount.
+
+import { useEffect, useRef, useState } from 'react';
+import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
+import { useTranslation } from 'react-i18next';
+import { useSeriesStore } from '@/state/seriesStore';
+import { SeriesCategorySidebar } from '@/components/series/SeriesCategorySidebar';
+import { SeriesHero } from '@/components/series/SeriesHero';
+import { SeriesGrid } from '@/components/series/SeriesGrid';
+import { EpisodeBrowserModal } from '@/components/series/EpisodeBrowserModal';
+
+let lastSeriesGridFocus: { categoryId: string; id: string | null } = { categoryId: '', id: null };
+
+export function SeriesScreen() {
+  const visibleSeries = useSeriesStore(s => s.visibleSeries);
+  const activeCategory = useSeriesStore(s => s.activeCategory);
+  const status = useSeriesStore(s => s.status);
+  const error = useSeriesStore(s => s.error);
+  const loadSeriesData = useSeriesStore(s => s.loadSeriesData);
+  const detailsSeriesId = useSeriesStore(s => s.detailsSeriesId);
+
+  const { t } = useTranslation();
+  const [focusedSeriesId, setFocusedSeriesId] = useState<string | null>(null);
+
+  // Page-level focus context — declared BEFORE any conditional returns
+  const { ref, focusKey, setFocus } = useFocusable({
+    focusKey: 'SERIES_PAGE',
+    trackChildren: true,
+    saveLastFocusedChild: true,
+  });
+
+  // Load series data on mount if not already loaded.
+  // Also retry if status is 'error' — covers the case where an Xtream source
+  // was passive on last visit and the user has since enabled it.
+  useEffect(() => {
+    if (status === 'idle' || status === 'error') {
+      void loadSeriesData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Clear search when leaving the screen so it doesn't persist stale
+  useEffect(() => {
+    return () => {
+      useSeriesStore.getState().setCategorySearch('');
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Set D-pad focus when data becomes ready
+  useEffect(() => {
+    if (status === 'ready') {
+      const t = setTimeout(() => setFocus('SERIES_GRID_VIRTUAL'), 60);
+      return () => clearTimeout(t);
+    }
+  }, [status, setFocus]);
+
+  const prevCategoryRef = useRef(activeCategory);
+
+  // Categoria mudou dentro da tela → primeira série.
+  // Voltou do player na mesma categoria → restaura a última série focada.
+  useEffect(() => {
+    const categoryChanged = prevCategoryRef.current !== activeCategory;
+    prevCategoryRef.current = activeCategory;
+
+    if (categoryChanged) {
+      const first = visibleSeries[0]?.id ?? null;
+      setFocusedSeriesId(first);
+      lastSeriesGridFocus = { categoryId: activeCategory, id: first };
+      return;
+    }
+
+    const saved =
+      lastSeriesGridFocus.categoryId === activeCategory &&
+      lastSeriesGridFocus.id &&
+      visibleSeries.some(s => s.id === lastSeriesGridFocus.id)
+        ? lastSeriesGridFocus.id
+        : visibleSeries[0]?.id ?? null;
+
+    setFocusedSeriesId(saved);
+  }, [activeCategory, visibleSeries]);
+
+  // Modal fechado → devolve o foco para o grid (evita direcional morto)
+  const prevDetailsRef = useRef(detailsSeriesId);
+  useEffect(() => {
+    const wasOpen = prevDetailsRef.current !== null;
+    prevDetailsRef.current = detailsSeriesId;
+    if (wasOpen && detailsSeriesId === null) {
+      const timer = setTimeout(() => setFocus('SERIES_GRID_VIRTUAL'), 60);
+      return () => clearTimeout(timer);
+    }
+  }, [detailsSeriesId, setFocus]);
+
+  const focusedSeries =
+    visibleSeries.find(s => s.id === focusedSeriesId) ?? visibleSeries[0] ?? null;
+
+  const handleFocusSeries = (id: string | null) => {
+    setFocusedSeriesId(id);
+    lastSeriesGridFocus = { categoryId: activeCategory, id };
+  };
+
+  return (
+    <>
+    {detailsSeriesId && <EpisodeBrowserModal />}
+    <FocusContext.Provider value={focusKey}>
+      <div
+        ref={ref as React.RefObject<HTMLDivElement>}
+        className="relative flex-1 overflow-hidden h-full"
+      >
+
+        {/* ── Loading ──────────────────────────────────────────────────── */}
+        {status === 'loading' && (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4 text-white/50">
+              <svg className="w-8 h-8 animate-spin text-[#E8B567]" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.4" strokeDashoffset="10" />
+              </svg>
+              <span className="font-serif italic text-[16px]">{t('series.loading')}</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Error ───────────────────────────────────────────────────── */}
+        {status === 'error' && (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-3 text-center max-w-[400px]">
+              <svg className="w-12 h-12 text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
+              </svg>
+              <p className="font-serif italic text-[16px] text-white/60">{error ?? t('series.error')}</p>
+              <button
+                onClick={() => void loadSeriesData()}
+                className="mt-2 px-4 h-9 rounded-full border border-[#E8B567]/55 text-[#E8B567] text-[12px] uppercase tracking-[0.25em] font-semibold"
+              >
+                {t('common.retry')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Main layout ─────────────────────────────────────────────── */}
+        {status === 'ready' && (
+          <div className="grid grid-cols-[22%_1fr] gap-6 px-12 py-6 h-full overflow-hidden">
+            <SeriesCategorySidebar />
+
+            <main className="flex flex-col gap-5 overflow-hidden min-h-0">
+              <SeriesHero series={focusedSeries} />
+              <SeriesGrid
+                focusedSeriesId={focusedSeriesId}
+                onFocusSeries={handleFocusSeries}
+                onEscapeToLeft={() => setFocus(`series-cat-${activeCategory}`)}
+              />
+            </main>
+          </div>
+        )}
+      </div>
+    </FocusContext.Provider>
+    </>
+  );
+}

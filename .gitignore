@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+dist-ipk/
+dist_LEGACY_PT/
+
+# Segredos (NUNCA subir!)
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.ipk
+*.backup
+
+# Android
+android/.gradle/
+android/**/build/
+android/app/build/
+android/captures/
+*.apk
