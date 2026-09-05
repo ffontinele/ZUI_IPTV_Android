@@ -21,7 +21,7 @@ function getPersistedLanguage(): string {
       if (lang && ['tr', 'en', 'de', 'fr', 'es', 'pt'].includes(lang)) return lang;
     }
   } catch { /* ignore – localStorage may be unavailable */ }
-  return 'tr';
+  return 'pt';
 }
 
 void i18n

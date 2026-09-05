@@ -37,3 +37,8 @@ body,
   scrollbar-width: auto;
   scrollbar-color: #0e0b0a rgba(255, 255, 255, 0.95);
 }
+
+/* ─── Android: rolagem por toque ─── */
+html, body, #root { touch-action: manipulation; }
+* { -webkit-overflow-scrolling: touch; }
+[class*="overflow-"] { touch-action: pan-x pan-y; }

@@ -24,3 +24,20 @@ window.addEventListener('unhandledrejection', (e) => {
   try { __zuiToast.getState().show('⚠ PROMISE: ' + String(e.reason)); } catch {}
 });
 
+
+// ─── Android: botão VOLTAR do controle/celular navega dentro do app ───
+import { App as CapApp } from '@capacitor/app';
+CapApp.addListener('backButton', () => {
+  const fire = (target: EventTarget) => {
+    const e: any = new KeyboardEvent('keydown', {
+      key: 'Backspace', code: 'Backspace', bubbles: true, cancelable: true,
+    } as any);
+    try {
+      Object.defineProperty(e, 'keyCode', { value: 461 });
+      Object.defineProperty(e, 'which', { value: 461 });
+    } catch {}
+    target.dispatchEvent(e);
+  };
+  fire(window);
+  fire(document);
+});
