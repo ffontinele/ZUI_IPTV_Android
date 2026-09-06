@@ -43,3 +43,4 @@ html, body, #root { touch-action: manipulation; }
 * { -webkit-overflow-scrolling: touch; }
 [class*="overflow-"] { touch-action: pan-x pan-y; }
 
+html { overflow: auto !important; }
