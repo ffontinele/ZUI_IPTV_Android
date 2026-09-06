@@ -240,4 +240,3 @@ export default function App() {
   );
 }
 
-import { App as CapApp } from '@capacitor/app';
