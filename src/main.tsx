@@ -48,9 +48,10 @@ CapApp.addListener('backButton', () => {
 
 
 
+
 // ─── Letterbox 1920x1080 + zoom/pan por gestos (independe do Android) ───
 let baseScale = 1, userZoom = 1, tx = 0, ty = 0, baseL = 0, baseT = 0;
-function applyStage() {
+function applyStage(): void {
   const root = document.getElementById('root') as HTMLElement | null;
   if (!root) return;
   const vw = window.innerWidth, vh = window.innerHeight;
@@ -69,7 +70,7 @@ function applyStage() {
   root.style.transformOrigin = 'top left';
   root.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
 }
-function fitStage() {
+function fitStage(): void {
   const vw = window.innerWidth, vh = window.innerHeight;
   baseScale = Math.min(vw / 1920, vh / 1080);
   baseL = (vw - 1920 * baseScale) / 2;
@@ -77,9 +78,9 @@ function fitStage() {
   if (userZoom === 1) { tx = baseL; ty = baseT; }
   applyStage();
 }
-const pts = new Map();
+const pts = new Map<number, { x: number; y: number }>();
 let lastDist = 0, lastSingle = { x: 0, y: 0 }, lastTap = 0;
-document.addEventListener('touchstart', (e) => {
+document.addEventListener('touchstart', (e: TouchEvent) => {
   for (const t of Array.from(e.changedTouches)) pts.set(t.identifier, { x: t.clientX, y: t.clientY });
   if (pts.size === 2) {
     const [a, b] = Array.from(pts.values());
@@ -88,7 +89,7 @@ document.addEventListener('touchstart', (e) => {
     lastSingle = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
   }
 }, { passive: false });
-document.addEventListener('touchmove', (e) => {
+document.addEventListener('touchmove', (e: TouchEvent) => {
   for (const t of Array.from(e.changedTouches)) if (pts.has(t.identifier)) pts.set(t.identifier, { x: t.clientX, y: t.clientY });
   if (pts.size >= 2) {
     e.preventDefault();
@@ -113,7 +114,7 @@ document.addEventListener('touchmove', (e) => {
     applyStage();
   }
 }, { passive: false });
-function endTouch(e) {
+function endTouch(e: TouchEvent): void {
   for (const t of Array.from(e.changedTouches)) pts.delete(t.identifier);
   if (pts.size < 2) lastDist = 0;
   if (pts.size === 0 && e.changedTouches.length === 1) {
