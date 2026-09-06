@@ -40,7 +40,7 @@ export function VideoPlayer() {
   useEffect(() => {
     if (!useExo || !currentSource) return;
     const saveInterval = setInterval(() => {
-      CapacitorVideoPlayer.getCurrentTime({ playerId: 'exo-chooser' })
+      CapacitorVideoPlayer.getCurrentTime({ playerId: 'exo-chooser' }).catch(() => CapacitorVideoPlayer.getCurrentTime({ playerId: 'exo-chooser-next' }))
         .then((res) => {
           if (res?.value && typeof res.value === 'number') {
             usePlayerStore.getState().setResumeSec(res.value);
@@ -57,7 +57,7 @@ export function VideoPlayer() {
     const resumeSec = usePlayerStore.getState().resumeSec;
     if (resumeSec > 0) {
       const onReady = () => {
-        CapacitorVideoPlayer.setCurrentTime({ playerId: 'exo-chooser', seektime: resumeSec })
+        CapacitorVideoPlayer.setCurrentTime({ playerId: 'exo-chooser', seektime: resumeSec }).catch(() => CapacitorVideoPlayer.setCurrentTime({ playerId: 'exo-chooser-next', seektime: resumeSec }))
           .catch(() => {});
         window.removeEventListener('jeepCapVideoPlayerReady', onReady);
       };
@@ -132,7 +132,7 @@ export function VideoPlayer() {
     };
   }, [subtitleEnabled]);
 
-  usePlayer(useExo ? { current: null } : videoRef, onFatalError);
+  usePlayer(chooserOpen || useExo ? { current: null } : videoRef, onFatalError);
 
   // Limpa a mensagem de erro quando o video comeca a tocar
   // (novo canal/video selecionado -> erro antigo deixa de ser infinito)
