@@ -172,7 +172,7 @@ export const useSeriesStore = create<SeriesStore>()(
       loadSeriesData: async () => {
         const creds = getXtreamCreds();
         if (!creds) {
-          set({ status: 'error', error: 'Xtream kaynağı bulunamadı. Ayarlardan Xtream kaynak ekleyin.' });
+          set({ status: 'error', error: 'Fonte Xtream não encontrada. Adicione uma fonte Xtream em Configurações.' });
           return;
         }
 
@@ -222,7 +222,7 @@ export const useSeriesStore = create<SeriesStore>()(
             error: null,
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Veri yüklenemedi';
+          const msg = err instanceof Error ? err.message : 'Não foi possível carregar os dados';
           set({ status: 'error', error: msg });
         }
       },
@@ -352,7 +352,7 @@ export const useSeriesStore = create<SeriesStore>()(
             });
             useUIStore.getState().navigate('player');
           } catch {
-            useToast.getState().show('Bölüm yüklenemedi');
+            useToast.getState().show('Não foi possível carregar o episódio');
           }
         })();
       },
@@ -376,7 +376,7 @@ export const useSeriesStore = create<SeriesStore>()(
     const keepSeason = rs != null && seasonNums.includes(rs) ? rs : firstSeason;
           set({ detailsInfo: info, detailsStatus: 'ready', detailsActiveSeason: keepSeason, reopenSeason: null });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Bölüm listesi yüklenemedi';
+          const msg = err instanceof Error ? err.message : 'Não foi possível carregar a lista de episódios';
           set({ detailsStatus: 'error', detailsError: msg });
         }
       },

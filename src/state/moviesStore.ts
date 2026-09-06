@@ -150,7 +150,7 @@ export const useMoviesStore = create<MoviesStore>()(
       loadVodData: async () => {
         const creds = getXtreamCreds();
         if (!creds) {
-          set({ status: 'error', error: 'Xtream kaynağı bulunamadı. Ayarlardan Xtream kaynak ekleyin.' });
+          set({ status: 'error', error: 'Fonte Xtream não encontrada. Adicione uma fonte Xtream em Configurações.' });
           return;
         }
 
@@ -197,7 +197,7 @@ export const useMoviesStore = create<MoviesStore>()(
             error: null,
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Veri yüklenemedi';
+          const msg = err instanceof Error ? err.message : 'Não foi possível carregar os dados';
           set({ status: 'error', error: msg });
         }
       },
