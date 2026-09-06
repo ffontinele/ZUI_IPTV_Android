@@ -5,7 +5,6 @@ import { usePlayerStore } from '@/state/playerStore';
 import { useUIStore } from '@/state/uiStore';
 import { useSettingsStore, SUBTITLE_SIZE_PX } from '@/state/settingsStore';
 import { usePlayer } from '@/hooks/usePlayer';
-import { Capacitor } from '@capacitor/core';
 import { CapacitorVideoPlayer } from 'capacitor-video-player';
 import { useRemote } from '@/hooks/useRemote';
 import { useWatchProgress } from '@/hooks/useWatchProgress';
@@ -159,6 +158,34 @@ export function VideoPlayer() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistentError]);
+
+  // Auto-proximo episodio quando ExoPlayer termina
+  useEffect(() => {
+    if (!useExo) return;
+    const onEnded = () => {
+      const res = usePlayerStore.getState().playNextEpisode();
+      if (res === 'ok') {
+        // Abre o proximo episodio no ExoPlayer tambem
+        const next = usePlayerStore.getState().currentSource;
+        if (next) {
+          setTimeout(() => {
+            CapacitorVideoPlayer.initPlayer({
+              mode: 'fullscreen',
+              url: next.url,
+              playerId: 'exo-chooser-next',
+              headers: next.headers || {},
+              exitOnEnd: true,
+              showControls: true,
+              chromecast: false,
+              title: next.name || '',
+            }).catch(console.error);
+          }, 500);
+        }
+      }
+    };
+    window.addEventListener('jeepCapVideoPlayerEnded', onEnded);
+    return () => window.removeEventListener('jeepCapVideoPlayerEnded', onEnded);
+  }, [useExo]);
 
   const escolherExo = async () => {
     if (!currentSource) return;
