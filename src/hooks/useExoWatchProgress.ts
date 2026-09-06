@@ -84,12 +84,12 @@ export function useExoWatchProgress(exoActive: boolean) {
 
     const interval = setInterval(() => { void saveProgress(); }, 5000);
 
-    CapacitorVideoPlayer.addListener('jeepCapVideoPlayerPause', () => { void saveProgress(); })
-      .then((h) => listeners.push(h)).catch(() => {});
-    CapacitorVideoPlayer.addListener('jeepCapVideoPlayerEnded', () => { lastSavedRef.current = 0; void saveProgress(); })
-      .then((h) => listeners.push(h)).catch(() => {});
-    CapacitorVideoPlayer.addListener('jeepCapVideoPlayerExit', () => { lastSavedRef.current = 0; void saveProgress(); })
-      .then((h) => listeners.push(h)).catch(() => {});
+    (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerPause', () => { void saveProgress(); })
+      .then((h: any) => listeners.push(h)).catch(() => {});
+    (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerEnded', () => { lastSavedRef.current = 0; void saveProgress(); })
+      .then((h: any) => listeners.push(h)).catch(() => {});
+    (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerExit', () => { lastSavedRef.current = 0; void saveProgress(); })
+      .then((h: any) => listeners.push(h)).catch(() => {});
 
     return () => {
       clearInterval(interval);

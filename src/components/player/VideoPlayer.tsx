@@ -60,13 +60,13 @@ export function VideoPlayer() {
 
     (async () => {
       try {
-        listeners.push(await CapacitorVideoPlayer.addListener('jeepCapVideoPlayerReady', () => {
+        listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerReady', () => {
           void seekResume();
         }));
-        listeners.push(await CapacitorVideoPlayer.addListener('jeepCapVideoPlayerExit', () => {
+        listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerExit', () => {
           if (!cancelled) navigate(lastMainScreen);
         }));
-        listeners.push(await CapacitorVideoPlayer.addListener('jeepCapVideoPlayerEnded', () => {
+        listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerEnded', () => {
           usePlayerStore.getState().playNextEpisode();
         }));
 
