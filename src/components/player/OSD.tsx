@@ -1,39 +1,25 @@
-// OSD — On-Screen Display for the video player.
-// Top bar: channel/film name + clock.
-// Bottom bar: play/pause · rewind · fast-forward · seek bar · time (VOD only).
-
+// OSD com gestos: tap para mostrar/ocultar, swipe direita=volume, esquerda=brilho
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import { usePlayerStore } from '@/state/playerStore';
-import { useUIStore } from '@/state/uiStore';
 import { useSettingsStore, LANGUAGE_LOCALES } from '@/state/settingsStore';
 import { useToast } from '@/components/ui/Toast';
-
-// ─── Clock ───────────────────────────────────────────────────────────────────
 
 function useClock() {
   const language   = useSettingsStore(s => s.language);
   const timeFormat = useSettingsStore(s => s.timeFormat);
   const locale     = LANGUAGE_LOCALES[language] ?? 'en-US';
   const hour12     = timeFormat === '12h';
-
-  const fmt = () =>
-    new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12 });
-
+  const fmt = () => new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12 });
   const [time, setTime] = useState(fmt);
-
   useEffect(() => {
     setTime(fmt());
     const id = setInterval(() => setTime(fmt()), 1000);
     return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, hour12]);
-
   return time;
 }
-
-// ─── Time helpers ─────────────────────────────────────────────────────────────
 
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || isNaN(seconds)) return '--:--';
@@ -41,82 +27,40 @@ function formatTime(seconds: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  if (h > 0) {
-    return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  }
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
-
-
-// ─── Next Episode button (series only) ───────────────────────────────────────
-
-
-
-
-// ─── Subtitle quick-toggle (CC button) ───────────────────────────────────────
 
 function SubtitleToggleOSDBtn() {
   const { t } = useTranslation();
   const showToast          = useToast(s => s.show);
   const subtitleEnabled    = useSettingsStore(s => s.subtitleEnabled);
   const setSubtitleEnabled = useSettingsStore(s => s.setSubtitleEnabled);
-
   const toggle = () => {
     const next = !subtitleEnabled;
     setSubtitleEnabled(next);
     showToast(next ? `🔤 ${t('player.sub_on')}` : `✕ ${t('player.sub_off')}`);
   };
-
-  const { ref, focused } = useFocusable({
-    focusKey: 'OSD_SUBTITLE',
-    onEnterPress: toggle,
-  });
-
+  const { ref, focused } = useFocusable({ focusKey: 'OSD_SUBTITLE', onEnterPress: toggle });
   return (
-    <button
-      ref={ref as React.RefObject<HTMLButtonElement>}
-      onClick={toggle}
-      className="bg-transparent flex flex-col items-center gap-1 transition-colors group"
-    >
-      <div className={[
-        'w-12 h-12 rounded-full grid place-items-center border-2',
-        focused
-          ? 'bg-white text-[#0e0b0a] border-white'
-          : 'bg-[#E8B567] text-[#0e0b0a] border-[#0e0b0a]',
-      ].join(' ')}>
-        {/* Closed-caption icon */}
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={[
-            'w-5 h-5 transition-colors',
-            focused || subtitleEnabled ? 'text-[#0e0b0a]' : 'text-[#0e0b0a]',
-          ].join(' ')}
-        >
+    <button ref={ref as React.RefObject<HTMLButtonElement>} onClick={toggle}
+      className="bg-transparent flex flex-col items-center gap-1 transition-colors group">
+      <div className={['w-12 h-12 rounded-full grid place-items-center border-2',
+        focused ? 'bg-white text-[#0e0b0a] border-white' : 'bg-[#E8B567] text-[#0e0b0a] border-[#0e0b0a]'].join(' ')}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+          strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#0e0b0a]">
           <rect x="2" y="5" width="20" height="14" rx="2" />
-          <path d="M7 12H6a2 2 0 000 4h1" />
-          <path d="M14 12h-1a2 2 0 000 4h1" />
+          <path d="M7 12H6a2 2 0 000 4h1" /><path d="M14 12h-1a2 2 0 000 4h1" />
         </svg>
       </div>
-      <span className={[
-        'text-[9px] uppercase tracking-[0.2em] font-bold',
-        focused || subtitleEnabled ? 'text-[#0e0b0a]' : 'text-[#0e0b0a]',
-      ].join(' ')}>
+      <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#0e0b0a]">
         {subtitleEnabled ? t('player.sub_on') : t('player.sub_off')}
       </span>
     </button>
   );
 }
 
-// ─── Bottom controls bar (VOD) ───────────────────────────────────────────────
-
-interface ControlsProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-}
+interface ControlsProps { videoRef: React.RefObject<HTMLVideoElement | null>; }
 
 function BottomControls({ videoRef }: ControlsProps) {
   const { t } = useTranslation();
@@ -124,70 +68,40 @@ function BottomControls({ videoRef }: ControlsProps) {
   const [duration, setDuration] = useState(0);
   const [paused, setPaused] = useState(false);
   const rafRef = useRef<number | null>(null);
-
-  // Poll video state via rAF while visible (more accurate than timeupdate)
   useEffect(() => {
     const tick = () => {
       const v = videoRef.current;
-      if (v) {
-        setCurrentTime(v.currentTime);
-        setDuration(v.duration);
-        setPaused(v.paused);
-      }
+      if (v) { setCurrentTime(v.currentTime); setDuration(v.duration); setPaused(v.paused); }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
+    return () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); };
   }, [videoRef]);
-
   const isLive = !isFinite(duration) || isNaN(duration) || duration === 0;
   const progress = isLive || duration === 0 ? 0 : Math.min(1, currentTime / duration);
-
   const togglePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) void v.play();
-    else v.pause();
+    const v = videoRef.current; if (!v) return;
+    if (v.paused) void v.play(); else v.pause();
   };
-
   const seek = (delta: number) => {
-    const v = videoRef.current;
-    if (!v || isLive) return;
+    const v = videoRef.current; if (!v || isLive) return;
     v.currentTime = Math.max(0, Math.min(duration, v.currentTime + delta));
   };
-
   return (
     <div className="px-12 pb-8 flex flex-col gap-3">
-      {/* Seek bar — only for VOD */}
       {!isLive && (
         <div className="flex items-center gap-3">
-          <span className="text-[13px] font-medium tabular-nums text-white/80 shrink-0 w-12 text-right">
-            {formatTime(currentTime)}
-          </span>
-          {/* Track */}
+          <span className="text-[13px] font-medium tabular-nums text-white/80 shrink-0 w-12 text-right">{formatTime(currentTime)}</span>
           <div className="flex-1 h-1 rounded-full bg-white/20 relative overflow-hidden">
-            <div
-              className="h-full bg-[#E8B567] rounded-full transition-none"
-              style={{ width: `${progress * 100}%` }}
-            />
+            <div className="h-full bg-[#E8B567] rounded-full" style={{ width: `${progress * 100}%` }} />
           </div>
-          <span className="text-[13px] font-medium tabular-nums text-white/50 shrink-0 w-12">
-            {formatTime(duration)}
-          </span>
+          <span className="text-[13px] font-medium tabular-nums text-white/50 shrink-0 w-12">{formatTime(duration)}</span>
         </div>
       )}
-
-      {/* Controls row — subtitle CC button is anchored to the right edge */}
       <div className="relative flex items-center justify-center gap-6">
-        {/* Rewind 10s */}
         {!isLive && (
-          <button
-            onClick={() => seek(-10)}
-            className="flex flex-col items-center gap-1 text-[#E8B567] hover:text-white transition-colors group"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#E8B567] text-[#0e0b0a] grid place-items-center group-hover:bg-white group-hover:text-[#0e0b0a] transition-colors">
+          <button onClick={() => seek(-10)} className="flex flex-col items-center gap-1 text-[#E8B567] group">
+            <div className="w-11 h-11 rounded-full bg-[#E8B567] text-[#0e0b0a] grid place-items-center">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M12 5V2L7 7l5 5V9c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
                 <text x="50%" y="67%" textAnchor="middle" fontSize="5" fill="currentColor" dy=".1em">10</text>
@@ -196,13 +110,8 @@ function BottomControls({ videoRef }: ControlsProps) {
             <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#0e0b0a]">−10s</span>
           </button>
         )}
-
-        {/* Play / Pause */}
-        <button
-          onClick={togglePlay}
-          className="bg-transparent text-[#0e0b0a] flex flex-col items-center gap-1.5 group"
-        >
-          <div className="w-14 h-14 rounded-full bg-[#E8B567] grid place-items-center shadow-[0_0_28px_-4px_#E8B567] group-hover:scale-[1.08] transition-transform">
+        <button onClick={togglePlay} className="bg-transparent flex flex-col items-center gap-1.5 group">
+          <div className="w-14 h-14 rounded-full bg-[#E8B567] grid place-items-center shadow-[0_0_28px_-4px_#E8B567]">
             {paused ? (
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-[#0e0b0a] translate-x-[1px]">
                 <path d="M7 4v16l13-8z" />
@@ -217,15 +126,9 @@ function BottomControls({ videoRef }: ControlsProps) {
             {paused ? t('player.play') : t('player.pause')}
           </span>
         </button>
-
-        {/* Fast-forward 10s */}
         {!isLive && (
-          <button
-            onClick={() => seek(10)}
-            className="flex flex-col items-center gap-1 text-[#E8B567] hover:text-white transition-colors group"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#E8B567] text-[#0e0b0a] grid place-items-center group-hover:bg-white group-hover:text-[#0e0b0a] transition-colors">
-
+          <button onClick={() => seek(10)} className="flex flex-col items-center gap-1 text-[#E8B567] group">
+            <div className="w-11 h-11 rounded-full bg-[#E8B567] text-[#0e0b0a] grid place-items-center">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M12 5V2l5 5-5 5V9c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
                 <text x="50%" y="67%" textAnchor="middle" fontSize="5" fill="currentColor" dy=".1em">10</text>
@@ -234,12 +137,7 @@ function BottomControls({ videoRef }: ControlsProps) {
             <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#0e0b0a]">+10s</span>
           </button>
         )}
-
-        {/* Subtitle (CC) quick-toggle — right edge, visible on all content types */}
-
       </div>
-
-      {/* Live badge */}
       {isLive && (
         <div className="flex justify-center">
           <div className="flex items-center gap-2 px-3 h-7 rounded-full bg-red-500/20 border border-red-500/40">
@@ -252,141 +150,124 @@ function BottomControls({ videoRef }: ControlsProps) {
   );
 }
 
-// ─── Main OSD ─────────────────────────────────────────────────────────────────
-
-interface OSDProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-}
+interface OSDProps { videoRef: React.RefObject<HTMLVideoElement | null>; }
 
 export function OSD({ videoRef }: OSDProps) {
   const osdVisible = usePlayerStore((s) => s.osdVisible);
+  const showOSD = usePlayerStore((s) => s.showOSD);
+  const hideOSD = usePlayerStore((s) => s.hideOSD);
   const currentSource = usePlayerStore((s) => s.currentSource);
   const audioWarning = usePlayerStore((s) => s.audioWarning);
   const playerState = usePlayerStore((s) => s.state);
   const time = useClock();
+  const [gesture, setGesture] = useState<{ type: 'volume' | 'brightness'; value: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const gestureRef = useRef<{ type: 'volume' | 'brightness'; start: number } | null>(null);
+  const osdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetOSDTimer = () => {
+    showOSD();
+    if (osdTimerRef.current) clearTimeout(osdTimerRef.current);
+    osdTimerRef.current = setTimeout(hideOSD, 10000);
+  };
+  useEffect(() => () => { if (osdTimerRef.current) clearTimeout(osdTimerRef.current); }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+    gestureRef.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    const video = videoRef.current;
+    if (!video) return;
+    if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+    if (Math.abs(dy) > Math.abs(dx)) {
+      const isRight = touchStartRef.current.x > window.innerWidth / 2;
+      const type = isRight ? 'volume' : 'brightness';
+      if (!gestureRef.current) {
+        const currentVal = isRight ? video.volume : (parseFloat((video.style.filter || '').match(/brightness\(([^)]+)\)/)?.[1] || '1') || 1);
+        gestureRef.current = { type, start: currentVal };
+      }
+      const sens = type === 'volume' ? 0.002 : 0.003;
+      let val = gestureRef.current.start - dy * sens;
+      if (type === 'volume') {
+        val = Math.max(0, Math.min(1, val));
+        video.volume = val;
+      } else {
+        val = Math.max(0.3, Math.min(1.5, val));
+        video.style.filter = `brightness(${val})`;
+      }
+      setGesture({ type, value: val });
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = Math.abs(t.clientX - touchStartRef.current.x);
+    const dy = Math.abs(t.clientY - touchStartRef.current.y);
+    const dur = Date.now() - touchStartRef.current.time;
+    if (dx < 10 && dy < 10 && dur < 300) {
+      if (osdVisible) hideOSD(); else resetOSDTimer();
+    }
+    setTimeout(() => setGesture(null), 1000);
+    touchStartRef.current = null;
+    gestureRef.current = null;
+  };
 
   if (playerState === 'error') return null;
 
   return (
-    <div
-      className={[
-        'absolute inset-0 pointer-events-none transition-opacity duration-300 flex flex-col justify-between',
-        osdVisible ? 'opacity-100' : 'opacity-0',
-      ].join(' ')}
-    >
-      {/* ── Top bar ──────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-b from-black/75 to-transparent px-12 pt-8 pb-10">
-        <div className="flex items-center justify-between">
-          <span className="font-serif text-[22px] font-light tracking-tight text-white drop-shadow">
-            {currentSource?.name ?? ''}
-          </span>
-          <span className="font-serif text-[20px] font-light tabular-nums text-white/70">{time}</span>
-        </div>
-
-        {/* Audio warning */}
-        {audioWarning && (
-          <div className="mt-3 px-4 py-2 bg-yellow-500/20 border border-yellow-500/40 rounded-lg inline-flex">
-            <span className="text-[13px] text-yellow-300">{audioWarning}</span>
+    <>
+      {gesture && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 px-8 py-6 rounded-2xl pointer-events-none z-50">
+          <div className="flex items-center gap-4">
+            {gesture.type === 'volume' ? (
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white">
+                <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.55 4.96l1.41-1.41 2.12 2.12-1.41 1.41-2.12-2.12zM16.92 17.49l1.41-1.41 2.12 2.12-1.41 1.41-2.12-2.12zM1 11h3v2H1v-2zm19 0h3v2h-3v-2zM3.55 19.04l2.12-2.12 1.41 1.41-2.12 2.12-1.41-1.41zM16.92 6.51l2.12-2.12 1.41 1.41-2.12 2.12-1.41-1.41z"/>
+              </svg>
+            )}
+            <div>
+              <div className="text-white text-2xl font-bold mb-1">{Math.round(gesture.value * 100)}%</div>
+              <div className="w-32 h-2 bg-white/30 rounded-full overflow-hidden">
+                <div className="h-full bg-[#E8B567]" style={{ width: `${gesture.value * 100}%` }} />
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* ── Bottom controls ───────────────────────────────────────────────── */}
-      <div className="pointer-events-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12">
-        <BottomControls videoRef={videoRef} />
-      </div>
-
-      {/* Setinhas de episodio: aparecem apenas quando estamos em serie */}
-      {useUIStore.getState().lastMainScreen === 'series' && (
-        <>
-          <div className="absolute bottom-10 left-10 pointer-events-auto"><PrevEpisodeButton /></div>
-          <div className="absolute bottom-10 right-10 pointer-events-auto"><NextEpisodeButton /></div>
-        </>
+        </div>
       )}
-
-      {/* Closed Caption no meio superior da tela */}
-      <div className="absolute top-8 right-40 pointer-events-auto"><SubtitleToggleOSDBtn /></div>
-    </div>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function PrevEpisodeButton() {
-  const { t } = useTranslation();
-  const showToast = useToast(ss => ss.show);
-  const seriesContext = usePlayerStore(ss => ss.seriesContext);
-  const playPrevEpisode = usePlayerStore(ss => ss.playPrevEpisode);
-
-  const handle = () => {
-    const r = playPrevEpisode();
-    if (r === 'ok') showToast('◀ ' + t('player.prev_episode'));
-    else if (r === 'no_more') showToast('⚠ ' + t('player.no_more_prev'));
-  };
-
-  const { ref, focused } = useFocusable({ focusKey: 'OSD_PREV_EP', onEnterPress: handle });
-
-  if (!seriesContext || seriesContext.episodeIndex <= 0) return null;
-  return (
-    <button ref={ref as React.RefObject<HTMLButtonElement>} onClick={handle}
-      className="bg-transparent flex flex-col items-center gap-1">
-      <div className={['w-12 h-12 rounded-full grid place-items-center border-2',
-        focused ? 'bg-white text-[#0e0b0a] border-white' : 'bg-[#E8B567] text-[#0e0b0a] border-[#0e0b0a]'].join(' ')}>
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M19 20L9 12l10-8v16z" />
-          <path d="M5 5h2v14H5z" />
-        </svg>
+      <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+        className={['absolute inset-0 transition-opacity duration-300 flex flex-col justify-between',
+          osdVisible ? 'opacity-100' : 'opacity-0'].join(' ')}>
+        <div className="bg-gradient-to-b from-black/75 to-transparent px-12 pt-8 pb-10 pointer-events-auto">
+          <div className="flex items-center justify-between">
+            <span className="font-serif text-[22px] font-light tracking-tight text-white drop-shadow">
+              {currentSource?.name ?? ''}
+            </span>
+            <span className="font-serif text-[20px] font-light tabular-nums text-white/70">{time}</span>
+          </div>
+          {audioWarning && (
+            <div className="mt-3 px-4 py-2 bg-yellow-500/20 border border-yellow-500/40 rounded-lg inline-flex">
+              <span className="text-[13px] text-yellow-200">⚠️ {audioWarning}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex-1" />
+        <div className="bg-gradient-to-t from-black/75 to-transparent pointer-events-auto">
+          <BottomControls videoRef={videoRef} />
+        </div>
       </div>
-      <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#0e0b0a]">{t('player.prev_episode')}</span>
-    </button>
-  );
-}
-
-function NextEpisodeButton() {
-  const { t } = useTranslation();
-  const showToast = useToast(ss => ss.show);
-  const seriesContext = usePlayerStore(ss => ss.seriesContext);
-  const playNextEpisode = usePlayerStore(ss => ss.playNextEpisode);
-
-  const handle = () => {
-    const r = playNextEpisode();
-    if (r === 'ok') showToast('▶ ' + t('player.next_episode'));
-    else if (r === 'no_more') showToast('⚠ ' + t('player.no_more_next'));
-  };
-
-  const { ref, focused } = useFocusable({ focusKey: 'OSD_NEXT_EP', onEnterPress: handle });
-
-  if (!seriesContext || seriesContext.episodeIndex >= seriesContext.allEpisodes.length - 1) return null;
-  return (
-    <button ref={ref as React.RefObject<HTMLButtonElement>} onClick={handle}
-      className="bg-transparent flex flex-col items-center gap-1">
-      <div className={['w-12 h-12 rounded-full grid place-items-center border-2',
-        focused ? 'bg-white text-[#0e0b0a] border-white' : 'bg-[#E8B567] text-[#0e0b0a] border-[#0e0b0a]'].join(' ')}>
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-          <path d="M5 4l10 8-10 8V4z" />
-          <path d="M17 5h2v14h-2z" />
-        </svg>
-      </div>
-      <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#0e0b0a]">{t('player.next_episode')}</span>
-    </button>
+    </>
   );
 }
