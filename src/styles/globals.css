@@ -42,3 +42,7 @@ body,
 html, body, #root { touch-action: manipulation; }
 * { -webkit-overflow-scrolling: touch; }
 [class*="overflow-"] { touch-action: pan-x pan-y; }
+
+/* ─── Android: pagina 1920x1080 com rolagem e zoom nativos ─── */
+html { overflow-y: auto !important; }
+body, #root { width: 1920px !important; height: 1080px !important; overflow: visible !important; }
