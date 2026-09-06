@@ -35,8 +35,9 @@ export function ExitModal({
       <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
         <div
           ref={ref as React.RefObject<HTMLDivElement>}
-          className="bg-bg-elevated rounded-lg p-12 max-w-md w-full"
+          className="relative bg-bg-elevated rounded-lg p-12 max-w-md w-full"
         >
+          <button data-testid="exit-close-x" onClick={onCancel} className="absolute top-4 right-4 w-10 h-10 grid place-items-center rounded-full border border-white/15 text-white/70 text-[16px]">✕</button>
           <h2 className="text-h2 text-text-primary">{title}</h2>
           <p className="text-body text-text-secondary mt-4">{message}</p>
           <div className="flex flex-col gap-3 mt-8">

@@ -8,7 +8,7 @@ import { useSettingsStore, LANGUAGE_LOCALES, type TimeFormat, type Language } fr
 
 // ─── Active nav determination ─────────────────────────────────────────────────
 
-type NavId = 'home' | 'live' | 'movies' | 'series' | 'settings';
+type NavId = 'home' | 'live' | 'movies' | 'series' | 'settings' | 'playlists';
 
 function getActiveNavId(screen: Screen): NavId {
   switch (screen) {
@@ -17,6 +17,7 @@ function getActiveNavId(screen: Screen): NavId {
     case 'movies':   return 'movies';
     case 'series':   return 'series';
     case 'settings': return 'settings';
+    case 'playlists': return 'playlists';
     default:         return 'home';
   }
 }
@@ -230,6 +231,8 @@ export function TopBar() {
           <NavButton focusKey="topbar-nav-movies"   icon={<MoviesIcon />}   label={t('nav.movies')}   active={active === 'movies'}   onPress={() => navigate('movies')} />
           <NavButton focusKey="topbar-nav-series"   icon={<SeriesIcon />}   label={t('nav.series')}   active={active === 'series'}   onPress={() => navigate('series')} />
           <NavButton focusKey="topbar-nav-settings" icon={<SettingsIcon />} label={t('nav.settings')} active={active === 'settings'} onPress={() => navigate('settings')} />
+          <NavButton focusKey="topbar-nav-playlists" icon={<PlaylistsIcon />} label={t('nav.playlists')} active={active === 'playlists'} onPress={() => navigate('playlists')} />
+
         </nav>
 
         {/* ③ Clock */}
@@ -241,5 +244,21 @@ export function TopBar() {
         <div className="absolute left-12 right-12 bottom-0 h-px bg-white/[0.06]" />
       </header>
     </FocusContext.Provider>
+  );
+}
+
+function PlaylistsIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10" />
+    </svg>
+  );
+}
+
+function PlaylistsIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <path d="M4 6h16M4 12h16M4 18h10" />
+    </svg>
   );
 }

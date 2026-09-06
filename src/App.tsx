@@ -1,3 +1,4 @@
+import { App as CapApp } from '@capacitor/app';
 import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
@@ -215,7 +216,7 @@ export default function App() {
   };
 
   return (
-    <div className="relative flex flex-col h-screen overflow-hidden bg-bg-base text-white antialiased font-sans">
+    <div className="relative flex flex-col h-full overflow-hidden bg-bg-base text-white antialiased font-sans">
       {/* Aurora ambient washes — static, no animation cost */}
       <div className="pointer-events-none absolute -top-40 -right-40 w-[1100px] h-[1100px] rounded-full bg-[radial-gradient(circle,rgba(232,181,103,0.18),transparent_60%)] blur-3xl z-0" />
       <div className="pointer-events-none absolute -bottom-60 -left-40 w-[900px] h-[900px] rounded-full bg-[radial-gradient(circle,rgba(174,118,233,0.12),transparent_60%)] blur-3xl z-0" />
@@ -230,7 +231,7 @@ export default function App() {
         <ExitModal
           title={t('app.exit_title')}
           message={t('app.exit_message')}
-          onExit={() => window.close()}
+          onExit={() => { try { CapApp.exitApp(); } catch { window.close(); } }}
           onReload={() => { window.location.reload(); }}
           onCancel={handleCloseModal}
         />
@@ -238,3 +239,5 @@ export default function App() {
     </div>
   );
 }
+
+import { App as CapApp } from '@capacitor/app';
