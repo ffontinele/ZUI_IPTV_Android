@@ -2,19 +2,12 @@ import { parse } from 'iptv-playlist-parser';
 import type { WorkerRequest, WorkerResponse } from '@/types/parser';
 import type { Channel } from '@/types/channel';
 
-self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
+self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   if (e.data.type !== 'parse') return;
-  const { sourceId, url, userAgent, headers } = e.data;
+  const { sourceId, text: rawText } = e.data as any;
 
   try {
-    const fetchHeaders: HeadersInit = { ...(headers ?? {}) };
-    if (userAgent) (fetchHeaders as Record<string, string>)['User-Agent'] = userAgent;
-
-    const res = await fetch(url, { headers: fetchHeaders });
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
-    const text = await res.text();
-
-    const playlist = parse(text);
+    const playlist = parse(rawText);
     const totalItems = playlist.items.length;
 
     const BATCH_SIZE = 500;
@@ -23,13 +16,11 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
 
     for (let i = 0; i < totalItems; i++) {
       const item = playlist.items[i];
-
-      // D-030: Channel ID format: 'm3u:{sourceId}:{idx}'
       const channel: Channel = {
-        id: `m3u:${sourceId}:${i}`,
+        id: 'm3u:' + sourceId + ':' + i,
         sourceId,
         sourceType: 'm3u',
-        name: item.name || item.tvg?.name || `Kanal ${i + 1}`,
+        name: item.name || item.tvg?.name || ('Kanal ' + (i + 1)),
         streamUrl: item.url,
         logoUrl: item.tvg?.logo || undefined,
         group: item.group?.title || undefined,

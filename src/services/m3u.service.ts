@@ -15,17 +15,20 @@ export type SyncResult = {
   channels: Channel[];
 };
 
-/**
- * M3U URL'ini Web Worker'da parse eder ve kanalları döner.
- * IDB yazımı yapılmaz — çağıran taraf resolve'dan sonra kendi stratejisiyle yazar.
- * (addSource: await putChannels, syncSource: fire-and-forget)
- */
 export async function syncM3USource(
   source: Source,
   onProgress?: (p: SyncProgress) => void
 ): Promise<SyncResult> {
   const config = source.config as M3UConfig;
 
+  // 1. Baixa o texto aqui (thread principal -> CapacitorHttp -> sem CORS)
+  const fetchHeaders: Record<string, string> = { ...(config.headers ?? {}) };
+  if (config.userAgent) fetchHeaders['User-Agent'] = config.userAgent;
+  const res = await fetch(config.url, { headers: fetchHeaders });
+  if (!res.ok) throw new Error('Fetch failed: ' + res.status + ' ' + res.statusText);
+  const text = await res.text();
+
+  // 2. Worker faz apenas o parse (sem rede)
   return new Promise((resolve, reject) => {
     const worker = new M3UParserWorker();
 
@@ -40,8 +43,6 @@ export async function syncM3USource(
         });
       } else if (msg.type === 'done') {
         worker.terminate();
-        // Parse tamamlandı — IDB yazmadan hemen resolve et.
-        // Caller, kendi stratejisine göre IDB'ye yazar.
         resolve({
           channelCount: msg.channelCount,
           categories: msg.categories,
@@ -55,15 +56,13 @@ export async function syncM3USource(
 
     worker.onerror = (e) => {
       worker.terminate();
-      reject(new Error(`Worker error: ${e.message}`));
+      reject(new Error('Worker error: ' + e.message));
     };
 
     worker.postMessage({
       type: 'parse',
       sourceId: source.id,
-      url: config.url,
-      userAgent: config.userAgent,
-      headers: config.headers,
+      text,
     });
   });
 }
