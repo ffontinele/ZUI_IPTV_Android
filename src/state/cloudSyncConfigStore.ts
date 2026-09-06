@@ -47,5 +47,9 @@ export function getSupabaseConfig(): CloudSyncConfig | null {
   if (envUrl && envKey && !envUrl.includes('your-project-ref')) {
     return { url: envUrl, anonKey: envKey };
   }
-  return null;
+  // Padrão embutido: mesmo Supabase do painel web (QR code)
+  return {
+    url: 'https://fyqpqqrtmgcsjnygxkqv.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cXBxcXJ0bWdjc2pueWd4a3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMzE3NjEsImV4cCI6MjEwMzcwNzc2MX0.QInVAAU7i0GNSkWRzP6HedqkP5U6HJBDRhpQyey0eh8',
+  };
 }
