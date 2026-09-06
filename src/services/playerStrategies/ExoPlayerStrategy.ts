@@ -17,13 +17,9 @@ export class ExoPlayerStrategy implements PlayerStrategy {
   private active = false;
 
   canHandle(url: string, _videoOrContentType?: HTMLVideoElement | string): boolean {
-    // So funciona no Android nativo
+    // Reserva universal no Android: so entra quando native/hls/mpegts falham
     if (!Capacitor.isNativePlatform()) return false;
-
-    // Toca tudo o que o browser falha: MKV, AVI, HEVC, etc.
-    const lurl = url.toLowerCase();
-    const nativeFormats = ['.mkv', '.avi', '.mpg', '.mpeg', '.ts', '.m2ts', '.flv', '.wmv', '.mov'];
-    return nativeFormats.some(ext => lurl.includes(ext));
+    return url.toLowerCase().startsWith('http');
   }
 
   async attach(_video: HTMLVideoElement, url: string, opts?: AttachOpts): Promise<void> {
