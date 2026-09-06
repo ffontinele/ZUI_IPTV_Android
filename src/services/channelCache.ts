@@ -137,7 +137,7 @@ export const channelCache = {
     const allChannels: Channel[] = [];
     for (const sourceId of sourceIds) {
       const channels = await index.getAll(IDBKeyRange.only(sourceId));
-      allChannels.push(...channels);
+      for (const __c of channels) allChannels.push(__c);
     }
     await tx.done;
     return allChannels;

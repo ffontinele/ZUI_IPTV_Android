@@ -44,3 +44,4 @@ html, body, #root { touch-action: manipulation; }
 [class*="overflow-"] { touch-action: pan-x pan-y; }
 
 html { overflow: auto !important; }
+html, body { overflow: hidden !important; }

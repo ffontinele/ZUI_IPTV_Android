@@ -40,7 +40,7 @@ export function deriveVisibleChannels(
       src?.type === 'xtream'
         ? applyPrefixFilter(channels, src.categoryPrefixFilter)
         : channels;
-    union.push(...filtered);
+    for (const __c of filtered) union.push(__c);
   }
   if (!activeCategory) return union;
   if (activeCategory === '__favorites__' || activeCategory === '__recent__') return union;
