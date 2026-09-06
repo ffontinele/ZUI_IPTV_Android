@@ -44,16 +44,23 @@ CapApp.addListener('backButton', () => {
 
 
 
-// ─── Escala o palco 1920x1080 pra caber em qualquer tela (letterbox) ───
+
+// ─── Letterbox 1920x1080 com zoom/pan (absolute, documento rolavel) ───
 function fitStage() {
   const root = document.getElementById('root') as HTMLElement | null;
   if (!root) return;
-  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const scale = Math.min(vw / 1920, vh / 1080);
   const w = 1920 * scale;
   const h = 1080 * scale;
-  root.style.position = 'fixed';
-  root.style.left = ((window.innerWidth - w) / 2) + 'px';
-  root.style.top = ((window.innerHeight - h) / 2) + 'px';
+  const body = document.body;
+  body.style.width = '1920px';
+  body.style.height = h + 'px';
+  body.style.overflow = 'visible';
+  root.style.position = 'absolute';
+  root.style.left = ((vw - w) / 2) + 'px';
+  root.style.top = ((vh - h) / 2) + 'px';
   root.style.width = '1920px';
   root.style.height = '1080px';
   root.style.transform = 'scale(' + scale + ')';
