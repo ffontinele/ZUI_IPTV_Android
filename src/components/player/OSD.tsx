@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePlayerStore } from '@/state/playerStore';
+import { useToast } from '@/components/ui/Toast';
 import { useSettingsStore, LANGUAGE_LOCALES } from '@/state/settingsStore';
 
 function useClock() {
@@ -29,6 +30,25 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
+
+
+function EpisodeNav() {
+  const seriesContext = usePlayerStore((s) => s.seriesContext);
+  const playNext = usePlayerStore((s) => s.playNextEpisode);
+  const playPrev = usePlayerStore((s) => s.playPrevEpisode);
+  const showToast = useToast((s) => s.show);
+  if (!seriesContext) return null;
+  const go = (dir: 'prev' | 'next') => {
+    const res = dir === 'next' ? playNext() : playPrev();
+    if (res === 'no_more') showToast(dir === 'next' ? '⏭ Fim dos episodios' : '⏮ Inicio da serie');
+  };
+  return (
+    <div className="flex justify-center gap-4 pb-2 pointer-events-auto">
+      <button onClick={() => go('prev')} className="px-6 h-10 rounded-full bg-[#E8B567] text-[#0e0b0a] text-[12px] font-bold uppercase tracking-[0.2em]">⏮ Episodio anterior</button>
+      <button onClick={() => go('next')} className="px-6 h-10 rounded-full bg-[#E8B567] text-[#0e0b0a] text-[12px] font-bold uppercase tracking-[0.2em]">Proximo episodio ⏭</button>
+    </div>
+  );
+}
 
 interface ControlsProps { videoRef: React.RefObject<HTMLVideoElement | null>; }
 
@@ -235,6 +255,7 @@ export function OSD({ videoRef }: OSDProps) {
         </div>
         <div className="flex-1" />
         <div className="bg-gradient-to-t from-black/75 to-transparent pointer-events-auto">
+          <EpisodeNav />
           <BottomControls videoRef={videoRef} />
         </div>
       </div>
