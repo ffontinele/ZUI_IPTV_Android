@@ -20,6 +20,13 @@ export function VideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [chooserOpen, setChooserOpen] = useState(true);
   const [useExo, setUseExo] = useState(false);
+  const subtitleEnabled = useSettingsStore((s) => s.subtitleEnabled);
+  const subtitleSize    = useSettingsStore((s) => s.subtitleSize);
+  const playerState = usePlayerStore((s) => s.state);
+  const error = usePlayerStore((s) => s.error);
+  const currentSource = usePlayerStore((s) => s.currentSource);
+  const setSource = usePlayerStore((s) => s.setSource);
+  const clearError = usePlayerStore((s) => s.setError);
 
   // Reseta o modal ao trocar de source (cada video novo pergunta de novo)
   useEffect(() => {
@@ -28,13 +35,36 @@ export function VideoPlayer() {
       setUseExo(false);
     }
   }, [currentSource?.id]);
-  const subtitleEnabled = useSettingsStore((s) => s.subtitleEnabled);
-  const subtitleSize    = useSettingsStore((s) => s.subtitleSize);
-  const playerState = usePlayerStore((s) => s.state);
-  const error = usePlayerStore((s) => s.error);
-  const currentSource = usePlayerStore((s) => s.currentSource);
-  const setSource = usePlayerStore((s) => s.setSource);
-  const clearError = usePlayerStore((s) => s.setError);
+
+  // ExoPlayer: salvar/retomar progresso
+  useEffect(() => {
+    if (!useExo || !currentSource) return;
+    const saveInterval = setInterval(() => {
+      CapacitorVideoPlayer.getCurrentTime({ playerId: 'exo-chooser' })
+        .then((res) => {
+          if (res?.value && typeof res.value === 'number') {
+            usePlayerStore.getState().setResumeSec(res.value);
+          }
+        })
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(saveInterval);
+  }, [useExo, currentSource]);
+
+  // ExoPlayer: retomar de onde parou
+  useEffect(() => {
+    if (!useExo || !currentSource) return;
+    const resumeSec = usePlayerStore.getState().resumeSec;
+    if (resumeSec > 0) {
+      const onReady = () => {
+        CapacitorVideoPlayer.setCurrentTime({ playerId: 'exo-chooser', seektime: resumeSec })
+          .catch(() => {});
+        window.removeEventListener('jeepCapVideoPlayerReady', onReady);
+      };
+      window.addEventListener('jeepCapVideoPlayerReady', onReady);
+      return () => window.removeEventListener('jeepCapVideoPlayerReady', onReady);
+    }
+  }, [useExo, currentSource]);
 
   const navigate = useUIStore((s) => s.navigate);
   const lastMainScreen = useUIStore((s) => s.lastMainScreen);
