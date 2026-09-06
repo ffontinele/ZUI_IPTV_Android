@@ -5,6 +5,8 @@ import { usePlayerStore } from '@/state/playerStore';
 import { useUIStore } from '@/state/uiStore';
 import { useSettingsStore, SUBTITLE_SIZE_PX } from '@/state/settingsStore';
 import { usePlayer } from '@/hooks/usePlayer';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorVideoPlayer } from 'capacitor-video-player';
 import { useRemote } from '@/hooks/useRemote';
 import { useWatchProgress } from '@/hooks/useWatchProgress';
 import { useAudioWatchdog } from '@/hooks/useAudioWatchdog';
@@ -17,6 +19,8 @@ import type { PlaybackAttempt } from '@/types/player';
 export function VideoPlayer() {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [chooserOpen, setChooserOpen] = useState(true);
+  const [useExo, setUseExo] = useState(false);
   const subtitleEnabled = useSettingsStore((s) => s.subtitleEnabled);
   const subtitleSize    = useSettingsStore((s) => s.subtitleSize);
   const playerState = usePlayerStore((s) => s.state);
@@ -91,7 +95,7 @@ export function VideoPlayer() {
     };
   }, [subtitleEnabled]);
 
-  usePlayer(videoRef, onFatalError);
+  usePlayer(useExo ? { current: null } : videoRef, onFatalError);
 
   // Limpa a mensagem de erro quando o video comeca a tocar
   // (novo canal/video selecionado -> erro antigo deixa de ser infinito)
@@ -156,6 +160,33 @@ export function VideoPlayer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistentError]);
 
+  const escolherExo = async () => {
+    if (!currentSource) return;
+    setChooserOpen(false);
+    setUseExo(true);
+    try {
+      await CapacitorVideoPlayer.initPlayer({
+        mode: 'fullscreen',
+        url: currentSource.url,
+        playerId: 'exo-chooser',
+        headers: currentSource.headers || {},
+        exitOnEnd: true,
+        showControls: true,
+        chromecast: false,
+        title: currentSource.name || '',
+      });
+    } catch (e) {
+      console.error('[ExoPlayer] erro:', e);
+      setUseExo(false);
+      setChooserOpen(true);
+    }
+  };
+
+  const escolherZui = () => {
+    setChooserOpen(false);
+    setUseExo(false);
+  };
+
   const handleBack = () => {
     setPersistentError(null);
     clearError(null);
@@ -176,6 +207,44 @@ export function VideoPlayer() {
       {/* Dynamic subtitle font size — targets native ::cue rendering */}
       <style>{`video::cue { font-size: ${SUBTITLE_SIZE_PX[subtitleSize]}; }`}</style>
 
+      {chooserOpen && currentSource && (
+        <div className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center pointer-events-auto">
+          <div className="bg-[#1a1715] rounded-3xl p-10 border border-[#E8B567]/30 max-w-2xl w-[90%]">
+            <h2 className="font-serif text-[28px] font-light text-white text-center mb-3">
+              Escolha o reprodutor
+            </h2>
+            <p className="text-[13px] text-white/60 text-center mb-8">
+              Selecione qual player usar para este video
+            </p>
+            <div className="grid grid-cols-2 gap-5">
+              <button
+                onClick={escolherZui}
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-[#E8B567]/10 border-2 border-[#E8B567]/50 hover:bg-[#E8B567]/20 transition-colors"
+              >
+                <div className="w-16 h-16 rounded-full bg-[#E8B567] grid place-items-center">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-[#0e0b0a]">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <div className="font-serif text-[18px] font-light text-white">ZUI Player</div>
+                <div className="text-[11px] text-white/50 text-center">Visual do app</div>
+              </button>
+              <button
+                onClick={escolherExo}
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white/5 border-2 border-white/20 hover:bg-white/10 transition-colors"
+              >
+                <div className="w-16 h-16 rounded-full bg-white grid place-items-center">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-[#0e0b0a]">
+                    <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-11 9l-4-4 4-4v3h6v2h-6v3z"/>
+                  </svg>
+                </div>
+                <div className="font-serif text-[18px] font-light text-white">ExoPlayer</div>
+                <div className="text-[11px] text-white/50 text-center">Tela cheia nativa</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <video
         ref={videoRef}
         className="absolute inset-0 w-full h-full"
