@@ -56,6 +56,7 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
     let syncError: string | undefined;
     let xtreamBouquets: number[] | undefined;
     let categoryOrder: string[] | undefined;
+    let xtreamExpDate: number | null | undefined;
 
     try {
       if (input.type === 'm3u') {
@@ -73,6 +74,7 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         channelCount = result.channels.length;
         xtreamBouquets = result.bouquets.length > 0 ? result.bouquets : undefined;
         categoryOrder = result.categoryNames.length > 0 ? result.categoryNames : undefined;
+        xtreamExpDate = result.expDate ?? null;
         await channelCache.putChannels(channels);
       }
     } catch (err) {
@@ -93,6 +95,7 @@ export const useSourceStore = create<SourceStore>((set, get) => ({
         ? { categoryPrefixFilter: input.categoryPrefixFilter }
         : {}),
       ...(categoryOrder !== undefined && { categoryOrder }),
+      ...(xtreamExpDate !== undefined && { expDate: xtreamExpDate }),
     };
 
     // DB'ye yaz

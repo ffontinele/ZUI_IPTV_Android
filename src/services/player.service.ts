@@ -1,6 +1,7 @@
 import { NativeStrategy } from './playerStrategies/NativeStrategy';
 import { HLSStrategy } from './playerStrategies/HLSStrategy';
 import { MpegTSStrategy } from './playerStrategies/MpegTSStrategy';
+import { ExoPlayerStrategy } from './playerStrategies/ExoPlayerStrategy';
 import type { PlayerStrategy } from './playerStrategies/PlayerStrategy';
 
 // ─── Singleton pool — reused by legacy resolveStrategy path ───────────────────
@@ -10,6 +11,7 @@ const STRATEGY_POOL: PlayerStrategy[] = [
   new NativeStrategy(),
   new HLSStrategy(),
   new MpegTSStrategy(),
+  new ExoPlayerStrategy(),
 ];
 
 /**
@@ -40,6 +42,7 @@ export function getStrategiesForUrl(
     new NativeStrategy(),
     new HLSStrategy(),
     new MpegTSStrategy(),
+    new ExoPlayerStrategy(),
   ];
   return candidates.filter((s) => s.canHandle(url, video));
 }
