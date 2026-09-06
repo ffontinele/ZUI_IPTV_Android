@@ -31,34 +31,6 @@ function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-function SubtitleToggleOSDBtn() {
-  const { t } = useTranslation();
-  const showToast          = useToast(s => s.show);
-  const subtitleEnabled    = useSettingsStore(s => s.subtitleEnabled);
-  const setSubtitleEnabled = useSettingsStore(s => s.setSubtitleEnabled);
-  const toggle = () => {
-    const next = !subtitleEnabled;
-    setSubtitleEnabled(next);
-    showToast(next ? `🔤 ${t('player.sub_on')}` : `✕ ${t('player.sub_off')}`);
-  };
-  const { ref, focused } = useFocusable({ focusKey: 'OSD_SUBTITLE', onEnterPress: toggle });
-  return (
-    <button ref={ref as React.RefObject<HTMLButtonElement>} onClick={toggle}
-      className="bg-transparent flex flex-col items-center gap-1 transition-colors group">
-      <div className={['w-12 h-12 rounded-full grid place-items-center border-2',
-        focused ? 'bg-white text-[#0e0b0a] border-white' : 'bg-[#E8B567] text-[#0e0b0a] border-[#0e0b0a]'].join(' ')}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
-          strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#0e0b0a]">
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <path d="M7 12H6a2 2 0 000 4h1" /><path d="M14 12h-1a2 2 0 000 4h1" />
-        </svg>
-      </div>
-      <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#0e0b0a]">
-        {subtitleEnabled ? t('player.sub_on') : t('player.sub_off')}
-      </span>
-    </button>
-  );
-}
 
 interface ControlsProps { videoRef: React.RefObject<HTMLVideoElement | null>; }
 
