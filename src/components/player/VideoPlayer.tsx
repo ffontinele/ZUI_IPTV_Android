@@ -20,6 +20,14 @@ export function VideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [chooserOpen, setChooserOpen] = useState(true);
   const [useExo, setUseExo] = useState(false);
+
+  // Reseta o modal ao trocar de source (cada video novo pergunta de novo)
+  useEffect(() => {
+    if (currentSource) {
+      setChooserOpen(true);
+      setUseExo(false);
+    }
+  }, [currentSource?.id]);
   const subtitleEnabled = useSettingsStore((s) => s.subtitleEnabled);
   const subtitleSize    = useSettingsStore((s) => s.subtitleSize);
   const playerState = usePlayerStore((s) => s.state);
