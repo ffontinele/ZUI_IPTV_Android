@@ -45,6 +45,7 @@ CapApp.addListener('backButton', () => {
 
 
 
+
 // ─── Letterbox 1920x1080 com zoom/pan (absolute, documento rolavel) ───
 function fitStage() {
   const root = document.getElementById('root') as HTMLElement | null;
