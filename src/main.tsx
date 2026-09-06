@@ -42,3 +42,23 @@ CapApp.addListener('backButton', () => {
   fire(document);
 });
 
+
+
+// ─── Escala o palco 1920x1080 pra caber em qualquer tela (letterbox) ───
+function fitStage() {
+  const root = document.getElementById('root') as HTMLElement | null;
+  if (!root) return;
+  const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  const w = 1920 * scale;
+  const h = 1080 * scale;
+  root.style.position = 'fixed';
+  root.style.left = ((window.innerWidth - w) / 2) + 'px';
+  root.style.top = ((window.innerHeight - h) / 2) + 'px';
+  root.style.width = '1920px';
+  root.style.height = '1080px';
+  root.style.transform = 'scale(' + scale + ')';
+  root.style.transformOrigin = 'top left';
+}
+window.addEventListener('resize', fitStage);
+window.addEventListener('orientationchange', fitStage);
+fitStage();
