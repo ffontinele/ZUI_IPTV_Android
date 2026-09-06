@@ -90,7 +90,7 @@ export class ExoPlayerStrategy implements PlayerStrategy {
     } catch {}
   }
 
-  onError(cb: (err: PlayerError) => void): void {
-    this.errorCb = cb;
+  onError(_cb: (err: PlayerError) => void): void {
+    // ExoPlayer gerencia seus próprios erros via events
   }
 }
