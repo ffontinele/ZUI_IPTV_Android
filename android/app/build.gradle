@@ -16,8 +16,20 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        zui {
+            storeFile file('zui.keystore')
+            storePassword 'zuizui123'
+            keyAlias 'zui'
+            keyPassword 'zuizui123'
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.zui
+        }
         release {
+            signingConfig signingConfigs.zui
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
