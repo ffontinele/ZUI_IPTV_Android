@@ -1,10 +1,8 @@
 // OSD com gestos: tap para mostrar/ocultar, swipe direita=volume, esquerda=brilho
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import { usePlayerStore } from '@/state/playerStore';
 import { useSettingsStore, LANGUAGE_LOCALES } from '@/state/settingsStore';
-import { useToast } from '@/components/ui/Toast';
 
 function useClock() {
   const language   = useSettingsStore(s => s.language);
