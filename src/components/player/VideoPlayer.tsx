@@ -92,9 +92,12 @@ export function VideoPlayer() {
       }
     };
     window.addEventListener('jeepCapVideoPlayerEnded', onEnded);
+    const onExit = () => { setTimeout(() => navigate(lastMainScreen), 400); };
+    window.addEventListener('jeepCapVideoPlayerExit', onExit);
 
     return () => {
       window.removeEventListener('jeepCapVideoPlayerEnded', onEnded);
+      window.removeEventListener('jeepCapVideoPlayerExit', onExit);
       CapacitorVideoPlayer.stopAllPlayers().catch(() => {});
     };
   }, [currentSource]);

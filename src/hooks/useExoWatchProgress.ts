@@ -17,7 +17,7 @@ export function useExoWatchProgress(exoActive: boolean) {
     if (!exoActive || !currentSourceId) return;
 
     let warnedDuration = false;
-    const PLAYER_IDS = ['exo-chooser', 'exo-chooser-next'];
+    const PLAYER_IDS = ['exo-player', 'exo-player-next', 'exo-chooser', 'exo-chooser-next'];
 
     const getCurrentTime = async (): Promise<number | null> => {
       for (const pid of PLAYER_IDS) {
@@ -98,12 +98,15 @@ export function useExoWatchProgress(exoActive: boolean) {
 
     const onPause = () => saveProgress();
     const onEnded = () => saveProgress();
+    const onExit = () => { lastSavedRef.current = 0; saveProgress(); };
+    window.addEventListener('jeepCapVideoPlayerExit', onExit);
     window.addEventListener('jeepCapVideoPlayerPause', onPause);
     window.addEventListener('jeepCapVideoPlayerEnded', onEnded);
     window.addEventListener('beforeunload', onPause);
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener('jeepCapVideoPlayerExit', onExit);
       window.removeEventListener('jeepCapVideoPlayerPause', onPause);
       window.removeEventListener('jeepCapVideoPlayerEnded', onEnded);
       window.removeEventListener('beforeunload', onPause);
