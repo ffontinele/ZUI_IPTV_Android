@@ -1,30 +1,27 @@
 import { useEffect, useRef } from 'react';
 import { CapacitorVideoPlayer } from 'capacitor-video-player';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { usePlayerStore } from '@/state/playerStore';
 import { useMoviesStore } from '@/state/moviesStore';
 import { useSeriesStore } from '@/state/seriesStore';
 import { usePlaylistStore } from '@/state/playlistStore';
 
-/**
- * Salva progresso do ExoPlayer (assistidos recentemente + tempo parado).
- * Replica a logica do useWatchProgress mas usa API do plugin Capacitor.
- */
+const PLAYER_IDS = ['exo-player', 'exo-player-next', 'exo-chooser', 'exo-chooser-next'];
+
 export function useExoWatchProgress(exoActive: boolean) {
   const lastSavedRef = useRef<number>(0);
-  const currentSourceId = usePlayerStore(s => s.currentSource?.id ?? null);
+  const currentSourceId = usePlayerStore((s) => s.currentSource?.id ?? null);
 
   useEffect(() => {
     if (!exoActive || !currentSourceId) return;
-
-    let warnedDuration = false;
-    const PLAYER_IDS = ['exo-player', 'exo-player-next', 'exo-chooser', 'exo-chooser-next'];
+    const listeners: PluginListenerHandle[] = [];
 
     const getCurrentTime = async (): Promise<number | null> => {
       for (const pid of PLAYER_IDS) {
         try {
-          const res = await CapacitorVideoPlayer.getCurrentTime({ playerId: pid });
-          if (res?.value && typeof res.value === 'number') return res.value;
-        } catch {}
+          const res: any = await CapacitorVideoPlayer.getCurrentTime({ playerId: pid });
+          if (res && typeof res.value === 'number' && res.value > 0) return res.value;
+        } catch { /* tenta o proximo */ }
       }
       return null;
     };
@@ -32,9 +29,9 @@ export function useExoWatchProgress(exoActive: boolean) {
     const getDuration = async (): Promise<number | null> => {
       for (const pid of PLAYER_IDS) {
         try {
-          const res = await CapacitorVideoPlayer.getDuration({ playerId: pid });
-          if (res?.value && typeof res.value === 'number') return res.value;
-        } catch {}
+          const res: any = await CapacitorVideoPlayer.getDuration({ playerId: pid });
+          if (res && typeof res.value === 'number' && res.value > 0) return res.value;
+        } catch { /* tenta o proximo */ }
       }
       return null;
     };
@@ -45,11 +42,8 @@ export function useExoWatchProgress(exoActive: boolean) {
 
       const currentTime = await getCurrentTime();
       const duration = await getDuration();
-
-      if (currentTime === null || duration === null || currentTime < 10 || !isFinite(duration)) {
-        if (!warnedDuration && currentTime && currentTime > 10) warnedDuration = true;
-        return;
-      }
+      if (currentTime === null || duration === null) return;
+      if (currentTime < 10 || !isFinite(duration) || duration <= 0) return;
 
       const progress = currentTime / duration;
       if (progress >= 0.95) return;
@@ -59,24 +53,19 @@ export function useExoWatchProgress(exoActive: boolean) {
       lastSavedRef.current = now;
 
       const id = currentSource.id;
-
-      // Adiciona aos recentes (se nao for canal ao vivo)
       if (!id.startsWith('channel-')) {
         usePlaylistStore.getState().addToRecent(id);
       }
 
       if (id.startsWith('vod-')) {
-        const movieId = id.replace('vod-', '');
-        useMoviesStore.getState().setWatchProgress(movieId, progress);
+        useMoviesStore.getState().setWatchProgress(id.replace('vod-', ''), progress);
         return;
       }
 
       if (id.startsWith('series-ep-')) {
         const ctx = usePlayerStore.getState().seriesContext;
         if (!ctx || !ctx.seriesId) return;
-
         useSeriesStore.getState().setWatchProgress(ctx.seriesId, progress);
-
         const ep = ctx.allEpisodes[ctx.episodeIndex];
         if (ep) {
           const remainingSec = Math.max(0, Math.round(duration - currentTime));
@@ -93,24 +82,19 @@ export function useExoWatchProgress(exoActive: boolean) {
       }
     };
 
-    // Salva a cada 5s + ao pausar/fim
-    const interval = setInterval(saveProgress, 5000);
+    const interval = setInterval(() => { void saveProgress(); }, 5000);
 
-    const onPause = () => saveProgress();
-    const onEnded = () => saveProgress();
-    const onExit = () => { lastSavedRef.current = 0; saveProgress(); };
-    window.addEventListener('jeepCapVideoPlayerExit', onExit);
-    window.addEventListener('jeepCapVideoPlayerPause', onPause);
-    window.addEventListener('jeepCapVideoPlayerEnded', onEnded);
-    window.addEventListener('beforeunload', onPause);
+    CapacitorVideoPlayer.addListener('jeepCapVideoPlayerPause', () => { void saveProgress(); })
+      .then((h) => listeners.push(h)).catch(() => {});
+    CapacitorVideoPlayer.addListener('jeepCapVideoPlayerEnded', () => { lastSavedRef.current = 0; void saveProgress(); })
+      .then((h) => listeners.push(h)).catch(() => {});
+    CapacitorVideoPlayer.addListener('jeepCapVideoPlayerExit', () => { lastSavedRef.current = 0; void saveProgress(); })
+      .then((h) => listeners.push(h)).catch(() => {});
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('jeepCapVideoPlayerExit', onExit);
-      window.removeEventListener('jeepCapVideoPlayerPause', onPause);
-      window.removeEventListener('jeepCapVideoPlayerEnded', onEnded);
-      window.removeEventListener('beforeunload', onPause);
-      saveProgress();
+      listeners.forEach((h) => { h.remove(); });
+      void saveProgress();
     };
   }, [exoActive, currentSourceId]);
 }

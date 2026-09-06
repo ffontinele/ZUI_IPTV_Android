@@ -1,112 +1,104 @@
-import { useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import { CapacitorVideoPlayer } from 'capacitor-video-player';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import { usePlayerStore } from '@/state/playerStore';
 import { useUIStore } from '@/state/uiStore';
-import { useSettingsStore, SUBTITLE_SIZE_PX } from '@/state/settingsStore';
 import { useExoWatchProgress } from '@/hooks/useExoWatchProgress';
-import { useAudioWatchdog } from '@/hooks/useAudioWatchdog';
-import { OSD } from './OSD';
 import { ErrorOverlay } from './ErrorOverlay';
 import { Spinner } from '@/components/common/Spinner';
+import type { PlaybackAttempt } from '@/types/player';
+
+const PLAYER_ID = 'exo-player';
 
 export function VideoPlayer() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const subtitleSize    = useSettingsStore((s) => s.subtitleSize);
   const playerState = usePlayerStore((s) => s.state);
   const error = usePlayerStore((s) => s.error);
   const currentSource = usePlayerStore((s) => s.currentSource);
   const setState = usePlayerStore((s) => s.setState);
   const setError = usePlayerStore((s) => s.setError);
-  const resumeSec = usePlayerStore((s) => s.resumeSec);
 
   const navigate = useUIStore((s) => s.navigate);
   const lastMainScreen = useUIStore((s) => s.lastMainScreen);
 
-  // Spatial nav
   const { pause, resume } = useFocusable({ focusKey: 'PLAYER_ROOT' });
   useEffect(() => {
     pause();
     return () => resume();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ExoPlayer: abrir direto ao montar
   useEffect(() => {
     if (!currentSource) return;
     setState('loading');
+    let cancelled = false;
+    const listeners: PluginListenerHandle[] = [];
 
-    const openExo = async () => {
+    const seekResume = async () => {
+      const st = usePlayerStore.getState();
+      const ratio = st.resumeRatio;
+      const sec = st.resumeSec;
       try {
+        if (ratio > 0.02 && ratio < 0.95) {
+          const d: any = await CapacitorVideoPlayer.getDuration({ playerId: PLAYER_ID });
+          const dur = typeof d?.value === 'number' ? d.value : 0;
+          if (dur > 0) {
+            const target = ratio * dur;
+            if (target > 5 && target < dur - 5) {
+              await CapacitorVideoPlayer.setCurrentTime({ playerId: PLAYER_ID, seektime: target });
+            }
+          }
+        } else if (sec > 10) {
+          await CapacitorVideoPlayer.setCurrentTime({ playerId: PLAYER_ID, seektime: sec });
+        }
+      } catch (e) {
+        console.warn('[ExoPlayer] seek resume falhou:', e);
+      }
+      st.setResumeRatio(0);
+      st.setResumeSec(0);
+    };
+
+    (async () => {
+      try {
+        listeners.push(await CapacitorVideoPlayer.addListener('jeepCapVideoPlayerReady', () => {
+          void seekResume();
+        }));
+        listeners.push(await CapacitorVideoPlayer.addListener('jeepCapVideoPlayerExit', () => {
+          if (!cancelled) navigate(lastMainScreen);
+        }));
+        listeners.push(await CapacitorVideoPlayer.addListener('jeepCapVideoPlayerEnded', () => {
+          usePlayerStore.getState().playNextEpisode();
+        }));
+
         await CapacitorVideoPlayer.initPlayer({
           mode: 'fullscreen',
           url: currentSource.url,
-          playerId: 'exo-player',
+          playerId: PLAYER_ID,
           headers: currentSource.headers || {},
           exitOnEnd: false,
           showControls: true,
           chromecast: false,
           title: currentSource.name || '',
         });
-        setState('playing');
-
-        // Retomar de onde parou
-        if (resumeSec > 10) {
-          await new Promise(r => setTimeout(r, 1000));
-          await CapacitorVideoPlayer.setCurrentTime({
-            playerId: 'exo-player',
-            seektime: resumeSec,
-          }).catch(() => {});
-        }
+        if (!cancelled) setState('playing');
       } catch (err) {
         console.error('[ExoPlayer] erro:', err);
-        setError({
-          code: 'fatal',
-          message: 'ExoPlayer falhou: ' + (err as Error).message,
-          recoverable: false,
-        });
-        setState('error');
-      }
-    };
-
-    openExo();
-
-    // Auto-proximo episodio
-    const onEnded = () => {
-      const res = usePlayerStore.getState().playNextEpisode();
-      if (res === 'ok') {
-        const next = usePlayerStore.getState().currentSource;
-        if (next) {
-          setTimeout(() => {
-            CapacitorVideoPlayer.initPlayer({
-              mode: 'fullscreen',
-              url: next.url,
-              playerId: 'exo-player-next',
-              headers: next.headers || {},
-              exitOnEnd: false,
-              showControls: true,
-              chromecast: false,
-              title: next.name || '',
-            }).catch(console.error);
-          }, 500);
+        if (!cancelled) {
+          setError({ code: 'fatal', message: 'ExoPlayer falhou: ' + (err as Error).message, recoverable: false });
+          setState('error');
         }
       }
-    };
-    window.addEventListener('jeepCapVideoPlayerEnded', onEnded);
-    const onExit = () => { setTimeout(() => navigate(lastMainScreen), 400); };
-    window.addEventListener('jeepCapVideoPlayerExit', onExit);
+    })();
 
     return () => {
-      window.removeEventListener('jeepCapVideoPlayerEnded', onEnded);
-      window.removeEventListener('jeepCapVideoPlayerExit', onExit);
+      cancelled = true;
+      listeners.forEach((h) => { h.remove(); });
       CapacitorVideoPlayer.stopAllPlayers().catch(() => {});
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSource]);
 
-  // ExoPlayer: salvar progresso
   useExoWatchProgress(true);
-
-  // Audio watchdog (mantido)
-  useAudioWatchdog(videoRef);
 
   const handleBack = () => {
     setError(null);
@@ -114,21 +106,11 @@ export function VideoPlayer() {
   };
 
   return (
-    <div className="relative w-full h-full bg-bg-base overflow-hidden">
-      <style>{`video::cue { font-size: ${SUBTITLE_SIZE_PX[subtitleSize]}; }`}</style>
-      <video ref={videoRef} className="absolute inset-0 w-full h-full" playsInline autoPlay />
-
-      {playerState === 'loading' && (
-        <div className="absolute inset-0">
-          <Spinner />
-        </div>
-      )}
-
+    <div className="relative w-full h-full bg-black overflow-hidden">
+      {playerState === 'loading' && <Spinner />}
       {error && !error.recoverable && (
-        <ErrorOverlay message={error.message} attempts={[]} onBack={handleBack} />
+        <ErrorOverlay message={error.message} attempts={[] as PlaybackAttempt[]} onBack={handleBack} />
       )}
-
-      <OSD videoRef={videoRef} />
     </div>
   );
 }
