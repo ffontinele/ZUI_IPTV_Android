@@ -46,7 +46,8 @@ CapApp.addListener('backButton', () => {
 
 
 
-// ─── Letterbox 1920x1080 com zoom/pan (absolute, documento rolavel) ───
+
+// ─── Letterbox 1920x1080 estavel + zoom/pan ───
 function fitStage() {
   const root = document.getElementById('root') as HTMLElement | null;
   if (!root) return;
@@ -66,7 +67,8 @@ function fitStage() {
   root.style.height = '1080px';
   root.style.transform = 'scale(' + scale + ')';
   root.style.transformOrigin = 'top left';
+  window.scrollTo(0, 0);
 }
-window.addEventListener('resize', fitStage);
-window.addEventListener('orientationchange', fitStage);
+['resize', 'orientationchange', 'pageshow', 'focus'].forEach(ev => window.addEventListener(ev, fitStage));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(fitStage, 100); });
 fitStage();
