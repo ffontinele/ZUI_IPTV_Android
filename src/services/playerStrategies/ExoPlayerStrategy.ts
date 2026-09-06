@@ -14,10 +14,9 @@ const ATTACH_TIMEOUT_MS = 10000;
 export class ExoPlayerStrategy implements PlayerStrategy {
   readonly name = 'native' as const; // mesmo nome pra compatibilidade com tipos
 
-  private errorCb: ((err: PlayerError) => void) | null = null;
   private active = false;
 
-  canHandle(url: string, videoOrContentType?: HTMLVideoElement | string): boolean {
+  canHandle(url: string, _videoOrContentType?: HTMLVideoElement | string): boolean {
     // So funciona no Android nativo
     if (!Capacitor.isNativePlatform()) return false;
 
@@ -89,7 +88,6 @@ export class ExoPlayerStrategy implements PlayerStrategy {
     try {
       void CapacitorVideoPlayer.stopAllPlayers();
     } catch {}
-    this.errorCb = null;
   }
 
   onError(cb: (err: PlayerError) => void): void {
