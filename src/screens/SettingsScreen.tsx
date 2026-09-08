@@ -5,6 +5,8 @@ import { useUIStore } from '@/state/uiStore';
 import { usePlaylistStore } from '@/state/playlistStore';
 import { useParentalStore } from '@/state/parentalStore';
 import { useToast } from '@/components/ui/Toast';
+import { DownloadManagerModal } from '@/components/downloads/DownloadManagerModal';
+import { useDownloadsStore } from '@/state/downloadsStore';
 import { PinSetupModal } from '@/components/parental/PinSetupModal';
 import { useCloudSyncConfigStore, getSupabaseConfig } from '@/state/cloudSyncConfigStore';
 import { useMoviesStore } from '@/state/moviesStore';
@@ -888,12 +890,15 @@ type Modal =
   | 'language'               // Dil seçimi
   | 'subtitle-settings'     // Altyazı ayarları
   | 'cloud-sync'
-  | null;
+  | null | 'downloads';
 
 export function SettingsScreen() {
   const { t }                = useTranslation();
   const navigate             = useUIStore((s) => s.navigate);
   const pinHash              = useParentalStore((s) => s.pinHash);
+  const dlItems = useDownloadsStore((x) => x.items);
+  const dlActive = dlItems.filter((i) => i.status === 'downloading' || i.status === 'queued').length;
+  const dlDone = dlItems.filter((i) => i.status === 'done').length;
   const unlockedThisSession  = useParentalStore((s) => s.unlockedThisSession);
   const lockSession          = useParentalStore((s) => s.lockSession);
   const hiddenCategories     = usePlaylistStore((s) => s.hiddenCategories);
@@ -1007,6 +1012,14 @@ export function SettingsScreen() {
   ];
 
   const historyCards: FullCard[] = [
+    {
+      id: 'history-downloads',
+      icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-[#E8B567]"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>,
+      title: 'Downloads',
+      subtitle: dlActive > 0 ? dlActive + ' baixando' : (dlDone > 0 ? dlDone + ' concluido' + (dlDone !== 1 ? 's' : '') : 'Nenhum ainda'),
+      badge: dlActive > 0 ? { label: String(dlActive), variant: 'on' } : undefined,
+      onPress: () => setModal('downloads'),
+    },
     {
       id: 'history-0',
       icon: <IconTrash />,
@@ -1229,6 +1242,8 @@ export function SettingsScreen() {
           onClose={() => { setModal(null); setTimeout(() => setFocus('settings-card-privacy-5'), 50); }}
         />
       )}
+
+      {modal === 'downloads' && <DownloadManagerModal onClose={() => setModal(null)} />}
 
       {modal === 'language' && (
         <LanguageModal

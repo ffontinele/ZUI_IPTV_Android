@@ -24,6 +24,7 @@ import { isEPGStale } from '@/services/epg.service';
 import { useParentalStore } from '@/state/parentalStore';
 import { useLogoCacheStore } from '@/state/logoCacheStore';
 import { Toast } from '@/components/ui/Toast';
+import { DownloadProgressBar } from '@/components/downloads/DownloadProgressBar';
 import { useToast } from '@/components/ui/Toast';
 import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
@@ -225,6 +226,7 @@ export default function App() {
       <RemoteRouter />
       <TopBar />
       <main className="relative flex-1 overflow-hidden z-10">{renderScreen()}</main>
+      <DownloadProgressBar />
       <Toast />
 
       {modalOpen === 'exit' && (
