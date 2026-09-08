@@ -9,6 +9,8 @@ export type DownloadItem = {
   fileName: string;
   filePath?: string;     // caminho local final
   progress: number;      // 0-100
+  bytesDone?: number;
+  bytesTotal?: number;
   status: 'queued' | 'downloading' | 'done' | 'error';
   error?: string;
   addedAt: number;
@@ -16,6 +18,7 @@ export type DownloadItem = {
 
 type DownloadsStore = {
   items: DownloadItem[];
+  reopenModal: boolean;
   hydrate: () => void;
   persist: () => void;
   add: (item: DownloadItem) => void;
@@ -27,6 +30,7 @@ const KEY = 'zui-downloads-v1';
 
 export const useDownloadsStore = create<DownloadsStore>((set, get) => ({
   items: [],
+  reopenModal: false,
   hydrate: () => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -49,3 +53,10 @@ export const useDownloadsStore = create<DownloadsStore>((set, get) => ({
     get().persist();
   },
 }));
+
+export function formatBytes(n?: number): string {
+  if (!n || n <= 0) return '0 MB';
+  const mb = n / (1024 * 1024);
+  if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
+  return mb.toFixed(1) + ' MB';
+}

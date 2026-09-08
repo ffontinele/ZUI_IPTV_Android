@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useUIStore } from '@/state/uiStore';
+import { useDownloadsStore } from '@/state/downloadsStore';
 import { usePlaylistStore } from '@/state/playlistStore';
 import { usePlayerStore } from '@/state/playerStore';
 import { useSeriesStore } from '@/state/seriesStore';
@@ -29,7 +30,8 @@ export function RemoteRouter() {
         // o próximo BACK fecha o modal; o seguinte volta pra Home.
         if (currentScreen === 'player') {
           const reopen = useSeriesStore.getState().reopenSeriesId;
-          navigate(useUIStore.getState().lastMainScreen);
+          const voltaDownloads = useDownloadsStore.getState().reopenModal;
+          navigate(voltaDownloads ? 'settings' : useUIStore.getState().lastMainScreen);
           if (reopen) {
             useSeriesStore.setState({ reopenSeriesId: null });
             void useSeriesStore.getState().openSeriesDetails(reopen);

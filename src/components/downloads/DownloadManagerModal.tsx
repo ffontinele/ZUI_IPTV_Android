@@ -22,6 +22,7 @@ function ItemRow({ item, onClose }: { item: any; onClose: () => void }) {
       url,
       sourceType: 'local' as any,
     });
+    useDownloadsStore.setState({ reopenModal: true });
     useUIStore.getState().navigate('player');
     onClose();
   };

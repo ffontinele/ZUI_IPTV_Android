@@ -36,9 +36,9 @@ export function useDownloadAndCopy() {
     let listener: any = null;
     try {
       listener = await (Filesystem as any).addListener('progress', (data: any) => {
-        if (data && data.contentLength > 0) {
+        if (data && data.contentLength > 0 && (!data.url || data.url === item.url)) {
           const progress = Math.min(99, Math.round((data.bytes / data.contentLength) * 100));
-          useDownloadsStore.getState().update(item.id, { progress, status: 'downloading' });
+          useDownloadsStore.getState().update(item.id, { progress, status: 'downloading', bytesDone: data.bytes, bytesTotal: data.contentLength });
         }
       });
     } catch { /* progresso opcional */ }
@@ -49,6 +49,7 @@ export function useDownloadAndCopy() {
         path: item.fileName,
         directory: Directory.Documents,
         recursive: true,
+        progress: true,
       });
       if (listener) await listener.remove();
       useDownloadsStore.getState().update(item.id, { progress: 100, status: 'done', filePath: res.path });

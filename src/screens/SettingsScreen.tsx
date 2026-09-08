@@ -904,6 +904,13 @@ export function SettingsScreen() {
   const hiddenCategories     = usePlaylistStore((s) => s.hiddenCategories);
   const { mac, key: deviceKey } = useDeviceInfo();
   const [modal, setModal] = useState<Modal>(null);
+  useEffect(() => {
+    if (useDownloadsStore.getState().reopenModal) {
+      useDownloadsStore.setState({ reopenModal: false });
+      setModal('downloads');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { timeFormat, setTimeFormat, language, subtitleEnabled, subtitleSize } = useSettingsStore();
 
   const { ref, focusKey, setFocus } = useFocusable({ focusKey: 'SETTINGS_SCREEN' });

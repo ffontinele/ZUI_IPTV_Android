@@ -1,4 +1,4 @@
-import { useDownloadsStore } from '@/state/downloadsStore';
+import { useDownloadsStore, formatBytes } from '@/state/downloadsStore';
 
 export function DownloadProgressBar() {
   const items = useDownloadsStore((s) => s.items);
@@ -13,7 +13,7 @@ export function DownloadProgressBar() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
             <p className="text-[11px] text-white/80 truncate font-medium">{title}</p>
-            <span className="text-[11px] tabular-nums text-[#E8B567] font-bold">{progress}%</span>
+            <span className="text-[11px] tabular-nums text-[#E8B567] font-bold">{formatBytes(active.bytesDone)} / {formatBytes(active.bytesTotal)} · {progress}%</span>
           </div>
           <div className="h-1 rounded-full bg-white/10 overflow-hidden">
             <div className="h-full bg-[#E8B567] transition-all duration-500 shadow-[0_0_8px_#E8B567]" style={{ width: progress + '%' }} />
