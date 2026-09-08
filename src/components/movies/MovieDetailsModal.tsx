@@ -3,6 +3,9 @@ import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-naviga
 import { useTranslation } from 'react-i18next';
 import { useMoviesStore } from '@/state/moviesStore';
 import { useToast } from '@/components/ui/Toast';
+import { useDownloadAndCopy, safeName } from '@/hooks/useDownloadAndCopy';
+import { buildVodUrl } from '@/services/vod.service';
+import { getXtreamCreds } from '@/lib/xtreamHelpers';
 
 export function MovieDetailsModal() {
   const { t } = useTranslation();
@@ -16,6 +19,7 @@ export function MovieDetailsModal() {
   const closeMovieDetails = useMoviesStore(s => s.closeMovieDetails);
   const playMovie = useMoviesStore(s => s.playMovie);
   const toggleFavorite = useMoviesStore(s => s.toggleFavorite);
+  const { download, copyLink } = useDownloadAndCopy();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -150,6 +154,32 @@ export function MovieDetailsModal() {
                   <path d="M7 4v16l13-8z" />
                 </svg>
                 {t('hero.watch')}
+              </button>
+
+              <button
+                onClick={() => {
+                  const creds = getXtreamCreds();
+                  if (!creds || !movie.streamId) { useToast.getState().show('❌ Sem fonte Xtream ativa'); return; }
+                  const url = buildVodUrl(creds, movie.streamId, movie.containerExtension || 'mp4');
+                  download({ id: 'vod-' + movie.id, kind: 'movie', title: movie.title, url, fileName: safeName(movie.title) + '.' + (movie.containerExtension || 'mp4') });
+                }}
+                className="flex items-center gap-2 px-5 h-12 rounded-full bg-white/10 border-2 border-white/20 text-white text-[14px] font-bold hover:bg-white/20 transition-all"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Baixar
+              </button>
+
+              <button
+                onClick={() => {
+                  const creds = getXtreamCreds();
+                  if (!creds || !movie.streamId) { useToast.getState().show('❌ Sem fonte Xtream ativa'); return; }
+                  const url = buildVodUrl(creds, movie.streamId, movie.containerExtension || 'mp4');
+                  copyLink(url, movie.title);
+                }}
+                className="flex items-center gap-2 px-5 h-12 rounded-full bg-white/10 border-2 border-white/20 text-white text-[14px] font-bold hover:bg-white/20 transition-all"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                Copiar
               </button>
 
               <button

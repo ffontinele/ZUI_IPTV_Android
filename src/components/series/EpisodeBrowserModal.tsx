@@ -45,13 +45,22 @@ function SeasonTab({
 
 // ─── Episode Row ───────────────────────────────────────────────────────────────
 
+import { useDownloadAndCopy, safeName } from '@/hooks/useDownloadAndCopy';
+import { buildSeriesEpisodeUrl } from '@/services/series.service';
+import { getXtreamCreds } from '@/lib/xtreamHelpers';
+import { useToast } from '@/components/ui/Toast';
+
 function EpisodeRow({
   episode,
   onPlay,
+  onDownload,
+  onCopy,
   isCurrent,
 }: {
   episode: XtreamSeriesEpisode;
   onPlay: () => void;
+  onDownload?: () => void;
+  onCopy?: () => void;
   isCurrent?: boolean;
 }) {
   const { t } = useTranslation();
@@ -121,6 +130,24 @@ function EpisodeRow({
         )}
       </div>
 
+      {/* Acoes: baixar / copiar link */}
+      <div className="shrink-0 flex items-center gap-1.5">
+        <button
+          onClick={(e) => { e.stopPropagation(); if (onDownload) onDownload(); }}
+          className="w-9 h-9 rounded-full grid place-items-center bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
+          title="Baixar episodio"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); if (onCopy) onCopy(); }}
+          className="w-9 h-9 rounded-full grid place-items-center bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
+          title="Copiar link"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+        </button>
+      </div>
+
       {/* Duration + play icon */}
       <div className="shrink-0 flex flex-col items-end justify-center gap-1.5 min-w-[52px]">
         {durationLabel && (
@@ -155,6 +182,7 @@ export function EpisodeBrowserModal() {
   const closeSeriesDetails      = useSeriesStore(s => s.closeSeriesDetails);
   const setDetailsActiveSeason  = useSeriesStore(s => s.setDetailsActiveSeason);
   const playEpisode             = useSeriesStore(s => s.playEpisode);
+  const { download, copyLink }   = useDownloadAndCopy();
   const openSeriesDetails       = useSeriesStore(s => s.openSeriesDetails);
 
   // Back / Backspace key → close
@@ -364,6 +392,29 @@ export function EpisodeBrowserModal() {
                     episode={ep}
                     isCurrent={!!(ceInfo && ceInfo.season === activeSeason && ceInfo.episode === ep.episode_num)}
                     onPlay={() => playEpisode(ep, series.title, String(activeSeason))}
+                    onDownload={() => {
+                      const creds = getXtreamCreds();
+                      if (!creds) { useToast.getState().show('❌ Sem fonte Xtream ativa'); return; }
+                      const sn = String(Number(activeSeason)).padStart(2, '0');
+                      const en = String(ep.episode_num).padStart(2, '0');
+                      const url = buildSeriesEpisodeUrl(creds, ep.id, ep.container_extension);
+                      download({
+                        id: 'series-ep-' + ep.id,
+                        kind: 'episode',
+                        title: series.title,
+                        subtitle: 'S' + sn + ':E' + en + ' - ' + (ep.title || 'Episodio ' + ep.episode_num),
+                        url,
+                        fileName: safeName(series.title) + '_s' + sn + 'e' + en + '.' + (ep.container_extension || 'mp4'),
+                      });
+                    }}
+                    onCopy={() => {
+                      const creds = getXtreamCreds();
+                      if (!creds) { useToast.getState().show('❌ Sem fonte Xtream ativa'); return; }
+                      const sn = String(Number(activeSeason)).padStart(2, '0');
+                      const en = String(ep.episode_num).padStart(2, '0');
+                      const url = buildSeriesEpisodeUrl(creds, ep.id, ep.container_extension);
+                      copyLink(url, series.title + ' - S' + sn + 'E' + en);
+                    }}
                   />
                 ))}
               </div>
