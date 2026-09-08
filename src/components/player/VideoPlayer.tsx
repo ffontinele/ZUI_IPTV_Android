@@ -64,7 +64,21 @@ export function VideoPlayer() {
           void seekResume();
         }));
         listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerExit', () => {
-          if (!cancelled) navigate(lastMainScreen);
+          if (cancelled) return;
+          // Dispara Backspace virtual: o RemoteRouter trata a saida
+          // e reabre o modal de episodios de series se necessario
+          const fire = (target: EventTarget) => {
+            const e: any = new KeyboardEvent('keydown', {
+              key: 'Backspace', code: 'Backspace', bubbles: true, cancelable: true,
+            } as any);
+            try {
+              Object.defineProperty(e, 'keyCode', { value: 461 });
+              Object.defineProperty(e, 'which', { value: 461 });
+            } catch { /* ignora */ }
+            target.dispatchEvent(e);
+          };
+          fire(window);
+          fire(document);
         }));
         listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerEnded', () => {
           usePlayerStore.getState().playNextEpisode();
