@@ -10,7 +10,8 @@
     "install:tv": "ares-install -d tv dist-ipk/com.zui.player_1.0.0_all.ipk",
     "launch": "ares-launch -d tv com.zui.player",
     "inspect": "ares-inspect -d tv -a com.zui.player -o",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.2",
@@ -43,6 +44,7 @@
     "@vitejs/plugin-legacy": "^5.4.3",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.0",
+    "patch-package": "^8.0.1",
     "postcss": "^8.4.0",
     "shx": "^0.3.4",
     "tailwindcss": "^3.4.0",

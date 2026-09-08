@@ -1,0 +1,24 @@
+diff --git a/node_modules/capacitor-video-player/android/src/main/java/com/jeep/plugin/capacitor/capacitorvideoplayer/FullscreenExoPlayerFragment.java b/node_modules/capacitor-video-player/android/src/main/java/com/jeep/plugin/capacitor/capacitorvideoplayer/FullscreenExoPlayerFragment.java
+index 5ec5257..9ee1b06 100644
+--- a/node_modules/capacitor-video-player/android/src/main/java/com/jeep/plugin/capacitor/capacitorvideoplayer/FullscreenExoPlayerFragment.java
++++ b/node_modules/capacitor-video-player/android/src/main/java/com/jeep/plugin/capacitor/capacitorvideoplayer/FullscreenExoPlayerFragment.java
+@@ -531,18 +531,7 @@ public class FullscreenExoPlayerFragment extends Fragment {
+       playerExit();
+       return;
+     }
+-    if (
+-      !isInPictureInPictureMode &&
+-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+-        packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) &&
+-        isPIPModeeEnabled &&
+-        pipEnabled &&
+-        playerReady // <- playerReady: this prevents a crash if the user presses back before the player is ready (when enters in pip mode and tries to get the aspect ratio)
+-    ) {
+-      pictureInPictureMode();
+-    } else {
+-      playerExit();
+-    }
++    playerExit();
+   }
+ 
+   private void resizePressed() {
