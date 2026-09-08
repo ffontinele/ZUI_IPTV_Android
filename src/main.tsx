@@ -27,7 +27,18 @@ window.addEventListener('unhandledrejection', (e) => {
 
 // ─── Android: botão VOLTAR do controle/celular navega dentro do app ───
 import { App as CapApp } from '@capacitor/app';
+import { CapacitorVideoPlayer } from 'capacitor-video-player';
+import { useUIStore } from '@/state/uiStore';
 CapApp.addListener('backButton', () => {
+  // Dentro do player: usar exitPlayer do plugin (igual a setinha da tela)
+  // Isso fecha o fragment corretamente e dispara o evento jeepCapVideoPlayerExit
+  const currentScreen = useUIStore.getState().currentScreen;
+  if (currentScreen === 'player') {
+    (CapacitorVideoPlayer as any).exitPlayer().catch(() => {});
+    return;
+  }
+
+  // Fora do player: comportamento atual (Backspace pro RemoteRouter)
   const fire = (target: EventTarget) => {
     const e: any = new KeyboardEvent('keydown', {
       key: 'Backspace', code: 'Backspace', bubbles: true, cancelable: true,
