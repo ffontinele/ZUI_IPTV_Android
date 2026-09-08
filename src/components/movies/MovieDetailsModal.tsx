@@ -3,6 +3,8 @@ import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-naviga
 import { useTranslation } from 'react-i18next';
 import { useMoviesStore } from '@/state/moviesStore';
 import { useToast } from '@/components/ui/Toast';
+import { useDownloadAndCopy } from '@/hooks/useDownloadAndCopy';
+import { buildVodUrl } from '@/services/vod.service';
 
 export function MovieDetailsModal() {
   const { t } = useTranslation();
@@ -16,6 +18,15 @@ export function MovieDetailsModal() {
   const closeMovieDetails = useMoviesStore(s => s.closeMovieDetails);
   const playMovie = useMoviesStore(s => s.playMovie);
   const toggleFavorite = useMoviesStore(s => s.toggleFavorite);
+  const { download, copyLink, downloading } = useDownloadAndCopy();
+
+  const getMovieUrl = () => {
+    if (!movie) return null;
+    const creds = (window as any).__ZUI_XTREAM_CREDS;
+    if (!creds || !movie.streamId) return null;
+    const ext = movie.containerExtension || 'mp4';
+    return buildVodUrl(creds, movie.streamId, ext);
+  };
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -151,6 +162,50 @@ export function MovieDetailsModal() {
                 </svg>
                 {t('hero.watch')}
               </button>
+
+              {getMovieUrl() && (
+                <button
+                  onClick={() => {
+                    const url = getMovieUrl();
+                    if (url) {
+                      download({
+                        id: `vod-${movie.id}`,
+                        kind: 'movie',
+                        title: movie.title,
+                        url,
+                        fileName: `${movie.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`,
+                      });
+                    }
+                  }}
+                  disabled={downloading}
+                  className={[
+                    'flex items-center gap-2 px-5 h-12 rounded-full text-[14px] font-bold transition-all',
+                    downloading
+                      ? 'bg-white/10 text-white/40 cursor-not-allowed'
+                      : 'bg-white/10 border-2 border-white/20 text-white hover:bg-white/20',
+                  ].join(' ')}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                  </svg>
+                  Baixar
+                </button>
+              )}
+
+              {getMovieUrl() && (
+                <button
+                  onClick={() => {
+                    const url = getMovieUrl();
+                    if (url) copyLink(url, movie.title);
+                  }}
+                  className="flex items-center gap-2 px-5 h-12 rounded-full bg-white/10 border-2 border-white/20 text-white text-[14px] font-bold hover:bg-white/20 transition-all"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                  </svg>
+                  Copiar
+                </button>
+              )}
 
               <button
                 ref={favRef as React.RefObject<HTMLButtonElement>}

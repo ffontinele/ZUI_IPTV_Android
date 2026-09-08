@@ -6,6 +6,8 @@
 import { useEffect } from 'react';
 import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-navigation';
 import { useTranslation } from 'react-i18next';
+import { useDownloadAndCopy } from '@/hooks/useDownloadAndCopy';
+import { buildSeriesEpisodeUrl } from '@/services/series.service';
 import { useSeriesStore } from '@/state/seriesStore';
 import type { XtreamSeriesEpisode } from '@/types/xtream';
 
@@ -48,11 +50,17 @@ function SeasonTab({
 function EpisodeRow({
   episode,
   onPlay,
+  onDownload,
+  onCopy,
   isCurrent,
+  downloading,
 }: {
   episode: XtreamSeriesEpisode;
   onPlay: () => void;
+  onDownload?: () => void;
+  onCopy?: () => void;
   isCurrent?: boolean;
+  downloading?: boolean;
 }) {
   const { t } = useTranslation();
   const { ref, focused } = useFocusable({
@@ -67,12 +75,10 @@ function EpisodeRow({
     }
   }, [focused, ref]);
 
-  const dur = episode.info?.duration;        // "00:45:00" or "45:00"
+  const dur = episode.info?.duration;
   const plot = episode.info?.plot;
   const thumb = episode.info?.movie_image;
   const epNum = episode.episode_num;
-
-  // Strip leading "00:" so "00:45:12" → "45:12"
   const durationLabel = dur ? dur.replace(/^00:/, '') : null;
 
   return (
@@ -121,19 +127,60 @@ function EpisodeRow({
         )}
       </div>
 
-      {/* Duration + play icon */}
-      <div className="shrink-0 flex flex-col items-end justify-center gap-1.5 min-w-[52px]">
-        {durationLabel && (
-          <span className="text-[11px] tabular-nums text-white/35">{durationLabel}</span>
-        )}
-        {focused && (
-          <div className="w-8 h-8 rounded-full bg-[#E8B567] grid place-items-center shadow-[0_0_16px_-4px_#E8B567]">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-[#0e0b0a] translate-x-[1px]">
-              <path d="M7 4v16l13-8z" />
+      {/* Action buttons + play */}
+      <div className="shrink-0 flex items-center gap-1.5">
+        {/* Download */}
+        {onDownload && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDownload(); }}
+            disabled={downloading}
+            className={[
+              'w-9 h-9 rounded-full grid place-items-center transition-all',
+              downloading
+                ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                : 'bg-white/10 border border-white/20 text-white/80 hover:bg-white/20',
+            ].join(' ')}
+            title="Baixar episodio"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
-          </div>
+          </button>
         )}
+
+        {/* Copy link */}
+        {onCopy && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCopy(); }}
+            className="w-9 h-9 rounded-full grid place-items-center bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
+            title="Copiar link"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Play (focado) */}
+        <div className={[
+          'w-9 h-9 rounded-full grid place-items-center transition-all',
+          focused
+            ? 'bg-[#E8B567] shadow-[0_0_16px_-4px_#E8B567]'
+            : 'bg-white/10 border border-white/20',
+        ].join(' ')}>
+          <svg viewBox="0 0 24 24" fill="currentColor" className={[
+            'w-3.5 h-3.5 translate-x-[1px]',
+            focused ? 'text-[#0e0b0a]' : 'text-white/80',
+          ].join(' ')}>
+            <path d="M7 4v16l13-8z" />
+          </svg>
+        </div>
       </div>
+
+      {/* Duration (aparece quando focado) */}
+      {durationLabel && focused && (
+        <span className="sr-only">{durationLabel}</span>
+      )}
     </div>
   );
 }
@@ -155,6 +202,7 @@ export function EpisodeBrowserModal() {
   const closeSeriesDetails      = useSeriesStore(s => s.closeSeriesDetails);
   const setDetailsActiveSeason  = useSeriesStore(s => s.setDetailsActiveSeason);
   const playEpisode             = useSeriesStore(s => s.playEpisode);
+  const { download, copyLink, downloading } = useDownloadAndCopy();
   const openSeriesDetails       = useSeriesStore(s => s.openSeriesDetails);
 
   // Back / Backspace key → close
@@ -364,6 +412,26 @@ export function EpisodeBrowserModal() {
                     episode={ep}
                     isCurrent={!!(ceInfo && ceInfo.season === activeSeason && ceInfo.episode === ep.episode_num)}
                     onPlay={() => playEpisode(ep, series.title, String(activeSeason))}
+                    onDownload={() => {
+                      const creds = (window as any).__ZUI_XTREAM_CREDS;
+                      if (!creds) return;
+                      const url = buildSeriesEpisodeUrl(creds, ep.id, ep.container_extension);
+                      download({
+                        id: `series-ep-${ep.id}`,
+                        kind: 'episode',
+                        title: series.title,
+                        subtitle: `S${String(activeSeason).padStart(2, '0')}:E${String(ep.episode_num).padStart(2, '0')} - ${ep.title || 'Episodio ' + ep.episode_num}`,
+                        url,
+                        fileName: `${series.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_S${String(activeSeason).padStart(2, '0')}E${String(ep.episode_num).padStart(2, '0')}.${ep.container_extension || 'mp4'}`,
+                      });
+                    }}
+                    onCopy={() => {
+                      const creds = (window as any).__ZUI_XTREAM_CREDS;
+                      if (!creds) return;
+                      const url = buildSeriesEpisodeUrl(creds, ep.id, ep.container_extension);
+                      copyLink(url, `${series.title} - S${String(activeSeason).padStart(2, '0')}E${String(ep.episode_num).padStart(2, '0')}`);
+                    }}
+                    downloading={downloading}
                   />
                 ))}
               </div>
