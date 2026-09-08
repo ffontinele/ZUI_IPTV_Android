@@ -63,9 +63,8 @@ export function VideoPlayer() {
         listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerReady', () => {
           void seekResume();
         }));
-        listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerExit', () => {
-          if (!cancelled) navigate(lastMainScreen);
-        }));
+        // NOTE: NAO escutamos Exit aqui. O main.tsx dispara Backspace ao sair,
+        // e o RemoteRouter ja trata a navegacao (incluindo reabrir modal de serie).
         listeners.push(await (CapacitorVideoPlayer as any).addListener('jeepCapVideoPlayerEnded', () => {
           usePlayerStore.getState().playNextEpisode();
         }));

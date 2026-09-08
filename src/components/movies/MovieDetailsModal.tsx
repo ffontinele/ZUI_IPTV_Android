@@ -5,6 +5,7 @@ import { useMoviesStore } from '@/state/moviesStore';
 import { useToast } from '@/components/ui/Toast';
 import { useDownloadAndCopy } from '@/hooks/useDownloadAndCopy';
 import { buildVodUrl } from '@/services/vod.service';
+import { getXtreamCreds } from '@/lib/xtreamHelpers';
 
 export function MovieDetailsModal() {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export function MovieDetailsModal() {
 
   const getMovieUrl = () => {
     if (!movie) return null;
-    const creds = (window as any).__ZUI_XTREAM_CREDS;
+    const creds = getXtreamCreds();
     if (!creds || !movie.streamId) return null;
     const ext = movie.containerExtension || 'mp4';
     return buildVodUrl(creds, movie.streamId, ext);

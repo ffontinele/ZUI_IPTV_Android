@@ -8,6 +8,7 @@ import { useFocusable, FocusContext } from '@noriginmedia/norigin-spatial-naviga
 import { useTranslation } from 'react-i18next';
 import { useDownloadAndCopy } from '@/hooks/useDownloadAndCopy';
 import { buildSeriesEpisodeUrl } from '@/services/series.service';
+import { getXtreamCreds } from '@/lib/xtreamHelpers';
 import { useSeriesStore } from '@/state/seriesStore';
 import type { XtreamSeriesEpisode } from '@/types/xtream';
 
@@ -413,7 +414,7 @@ export function EpisodeBrowserModal() {
                     isCurrent={!!(ceInfo && ceInfo.season === activeSeason && ceInfo.episode === ep.episode_num)}
                     onPlay={() => playEpisode(ep, series.title, String(activeSeason))}
                     onDownload={() => {
-                      const creds = (window as any).__ZUI_XTREAM_CREDS;
+                      const creds = getXtreamCreds();
                       if (!creds) return;
                       const url = buildSeriesEpisodeUrl(creds, ep.id, ep.container_extension);
                       download({
@@ -426,7 +427,7 @@ export function EpisodeBrowserModal() {
                       });
                     }}
                     onCopy={() => {
-                      const creds = (window as any).__ZUI_XTREAM_CREDS;
+                      const creds = getXtreamCreds();
                       if (!creds) return;
                       const url = buildSeriesEpisodeUrl(creds, ep.id, ep.container_extension);
                       copyLink(url, `${series.title} - S${String(activeSeason).padStart(2, '0')}E${String(ep.episode_num).padStart(2, '0')}`);
