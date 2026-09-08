@@ -110,7 +110,7 @@ export function DownloadManagerModal({ onClose }: { onClose: () => void }) {
   const done = items.filter((i) => i.status === 'done').length;
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
-      <div ref={ref as any} className="w-full max-w-3xl max-h-[85vh] bg-[[#14110e] border border-[#E8B567]/30 rounded-2xl shadow-[0_0_40px_-8px_#E8B567] overflow-hidden flex flex-col">
+      <div ref={ref as any} className="w-[94vw] max-w-[1400px] h-[88vh] bg-[#14110e] border border-[#E8B567]/30 rounded-2xl shadow-[0_0_40px_-8px_#E8B567] overflow-hidden flex flex-col">
         <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
           <div>
             <h2 className="text-[18px] font-bold text-[#E8B567]">Meus Downloads</h2>

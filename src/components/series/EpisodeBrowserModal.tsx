@@ -134,17 +134,19 @@ function EpisodeRow({
       <div className="shrink-0 flex items-center gap-1.5">
         <button
           onClick={(e) => { e.stopPropagation(); if (onDownload) onDownload(); }}
-          className="w-9 h-9 rounded-full grid place-items-center bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
+          className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-[#E8B567] text-[#0e0b0a] text-[11px] font-bold shadow-[0_0_12px_-2px_#E8B567] hover:scale-[1.03] transition-all"
           title="Baixar episodio"
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Baixar
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); if (onCopy) onCopy(); }}
-          className="w-9 h-9 rounded-full grid place-items-center bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all"
+          className="flex items-center gap-1.5 px-3 h-8 rounded-full border-2 border-[#E8B567]/50 bg-white/5 text-[#E8B567] text-[11px] font-bold hover:bg-[#E8B567]/10 transition-all"
           title="Copiar link"
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          Copiar
         </button>
       </div>
 
