@@ -255,7 +255,7 @@ export function EpisodeBrowserModal() {
       <FocusContext.Provider value={focusKey}>
         <div
           ref={ref as React.RefObject<HTMLDivElement>}
-          className="relative w-[1120px] h-[660px] rounded-[28px] overflow-hidden border border-white/[0.08] flex"
+          className="relative w-[97vw] h-[94vh] max-w-[1600px] rounded-[28px] overflow-hidden border border-white/[0.08] flex"
           style={{ background: `linear-gradient(145deg, ${c1}18 0%, #131110 35%)` }}
         >
           {/* ── Left panel: series art + info + season pills ── */}

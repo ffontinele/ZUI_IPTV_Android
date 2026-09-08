@@ -84,7 +84,7 @@ export function MovieDetailsModal() {
       <FocusContext.Provider value={focusKey}>
         <div
           ref={ref as React.RefObject<HTMLDivElement>}
-          className="relative w-[1000px] h-[560px] rounded-[28px] overflow-hidden border border-white/8 flex"
+          className="relative w-[97vw] h-[94vh] max-w-[1600px] rounded-[28px] overflow-hidden border border-white/8 flex"
           style={{ background: `linear-gradient(145deg, ${c1}18 0%, #131110 35%)` }}
         >
           <div className="w-[320px] shrink-0 p-6 flex items-center justify-center">
@@ -163,7 +163,7 @@ export function MovieDetailsModal() {
                   const url = buildVodUrl(creds, movie.streamId, movie.containerExtension || 'mp4');
                   download({ id: 'vod-' + movie.id, kind: 'movie', title: movie.title, url, fileName: safeName(movie.title) + '.' + (movie.containerExtension || 'mp4') });
                 }}
-                className="flex items-center gap-2 px-5 h-12 rounded-full bg-white/10 border-2 border-white/20 text-white text-[14px] font-bold hover:bg-white/20 transition-all"
+                className="flex items-center gap-2 px-6 h-12 rounded-full bg-[#E8B567] text-[#0e0b0a] text-[14px] font-bold shadow-[0_0_24px_-6px_#E8B567] hover:scale-105 transition-all"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                 Baixar
@@ -176,7 +176,7 @@ export function MovieDetailsModal() {
                   const url = buildVodUrl(creds, movie.streamId, movie.containerExtension || 'mp4');
                   copyLink(url, movie.title);
                 }}
-                className="flex items-center gap-2 px-5 h-12 rounded-full bg-white/10 border-2 border-white/20 text-white text-[14px] font-bold hover:bg-white/20 transition-all"
+                className="flex items-center gap-2 px-6 h-12 rounded-full bg-[#E8B567] text-[#0e0b0a] text-[14px] font-bold shadow-[0_0_24px_-6px_#E8B567] hover:scale-105 transition-all"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 Copiar
