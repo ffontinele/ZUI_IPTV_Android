@@ -76,10 +76,11 @@ export function VideoPlayer() {
           playerId: PLAYER_ID,
           headers: currentSource.headers || {},
           exitOnEnd: false,
+          pip: false,
           showControls: true,
           chromecast: false,
           title: currentSource.name || '',
-        });
+        } as any);
         if (!cancelled) setState('playing');
       } catch (err) {
         console.error('[ExoPlayer] erro:', err);
